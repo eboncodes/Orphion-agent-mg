@@ -1,30 +1,85 @@
-# Recreate UI from Screenshot
+# Orphion-agent
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+**Orphion-agent** is a free and open-source AI assistant platform developed by [TEJ intelligence](https://tejintelligence.com). Built for speed and intelligence, Orphion-agent combines cutting-edge language models with modern UI/UX to deliver fast, context-aware AI interactions. This project is currently web-based, with mobile versions in development.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/eboncodes-projects/v0-recreate-ui-from-screenshot-pr)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/zzCpdMH5FUm)
+![Orphion UI Screenshot]([https://ibb.co.com/LdsyFmwm]) <!-- Replace or remove if you don’t have a screenshot -->
 
-## Overview
+---
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## 🚀 Features
 
-## Deployment
+- ⚡ Ultra-fast LLM API integration (e.g., Groq, LLaMA)
+- 💬 Natural language interface
+- 🌐 Real-time web search support (optional with plugins like Tavily)
+- 📆 Built with **Next.js**, **React**, and **TailwindCSS**
+- 🧩 Plugin support (coming soon)
+- 🔓 Open-source and fully customizable
 
-Your project is live at:
+---
 
-**[https://vercel.com/eboncodes-projects/v0-recreate-ui-from-screenshot-pr](https://vercel.com/eboncodes-projects/v0-recreate-ui-from-screenshot-pr)**
+## 📦 Installation
 
-## Build your app
+> **Note**: You need **Node.js (>=16.x)** and **npm** installed. If you encounter dependency issues, use the legacy flag as shown below.
 
-Continue building your app on:
+### Clone the repository
 
-**[https://v0.dev/chat/projects/zzCpdMH5FUm](https://v0.dev/chat/projects/zzCpdMH5FUm)**
+```bash
+git clone https://github.com/tej-intelligence/orphion-agent.git
+cd orphion-agent
+```
 
-## How It Works
+### Install dependencies
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+```bash
+npm install --legacy-peer-deps
+```
+
+### Build the app
+
+```bash
+npm run build
+```
+
+### Start the development server
+
+```bash
+npm run dev
+```
+
+Open your browser and navigate to `http://localhost:3000`
+
+---
+
+## 🧠 Tech Stack
+
+- [Next.js](https://nextjs.org/)
+- [React](https://react.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Groq API](https://console.groq.com/)
+- [LLMs (LLaMA / DeepSeek)](https://huggingface.co)
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please feel free to fork the repo and submit a pull request.
+
+---
+
+## 📞 Support
+
+For questions, suggestions, or support:
+
+📧 Email: [support@tejintelligence.com](mailto:support@tejintelligence.com)  
+🌐 Website: [https://tejintelligence.com](https://tejintelligence.com)
+
+---
+
+## 🧠 Developed by [TEJ intelligence](https://tejintelligence.com)
+
