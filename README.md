@@ -1,7 +1,7 @@
-# Orphion-agent
+# Orphion Agent Preview
 
 **Orphion-agent** is a free and open-source AI assistant platform developed by [TEJ intelligence](https://tejintelligence.com). Built for speed and intelligence, Orphion-agent combines cutting-edge language models with modern UI/UX to deliver fast, context-aware AI interactions. This project is currently web-based, with mobile versions in development.
-
+# Orphion Agent Preview
 [![image.png](https://i.postimg.cc/BnwrpJd0/image.png)](https://postimg.cc/4YV2NRfL) <!-- Replace or remove if you don’t have a screenshot -->
 
 ---
@@ -12,7 +12,6 @@
 - 💬 Natural language interface
 - 🌐 Real-time web search support (optional with plugins like Tavily)
 - 📆 Built with **Next.js**, **React**, and **TailwindCSS**
-- 🧩 Plugin support (coming soon)
 - 🔓 Open-source and fully customizable
 
 ---
@@ -24,7 +23,7 @@
 ### Clone the repository
 
 ```bash
-git clone https://github.com/tej-intelligence/orphion-agent.git
+git clone https://github.com/tejintelligence-platform/Orphion-Agent.git
 cd orphion-agent
 ```
 
@@ -62,7 +61,7 @@ Open your browser and navigate to `http://localhost:3000`
 
 ## 📜 License
 
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **Apache 2.0 License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
