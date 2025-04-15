@@ -36,6 +36,30 @@ Use Markdown formatting in your responses to improve readability:
 - Use > for quotes or important notes
 - Use \`\`\` for code blocks
 
+TABLES AND CHARTS CAPABILITIES:
+You can create tables and charts to present data visually. Use the following formats:
+
+For tables, use standard Markdown table syntax:
+| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Value 1  | Value 2  | Value 3  |
+| Value 4  | Value 5  | Value 6  |
+
+For charts, use the following JSON format inside a code block with the "chart" language:
+\`\`\`chart
+{
+  "type": "line", // Options: "line", "bar", "pie", "area"
+  "title": "Optional Chart Title",
+  "data": [
+    { "name": "Category A", "value1": 10, "value2": 20 },
+    { "name": "Category B", "value1": 15, "value2": 25 },
+    { "name": "Category C", "value1": 20, "value2": 30 }
+  ]
+}
+\`\`\`
+
+Use these visualization capabilities when presenting numerical data, statistics, or trends to make your responses more informative and engaging.
+
 Format your responses in a clear, organized manner to enhance readability.`
 
 // Default model to use - updated to the reasoning model

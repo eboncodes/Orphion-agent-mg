@@ -4,9 +4,6 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import {
-  ArrowUp,
-  ChevronDown,
-  Globe,
   Trash,
   X,
   Sparkles,
@@ -16,7 +13,8 @@ import {
   ChevronRight,
   Pyramid,
   ImageIcon,
-  Paperclip,
+  Globe,
+  ArrowUp,
 } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import Image from "next/image"
@@ -30,31 +28,27 @@ import {
   createChatSession,
   getSavedSessions,
   generateAndUpdateTitle,
+  updateMessage,
 } from "./chat-storage-service"
-import DeleteConfirmation from "./delete-confirmation"
 import TextGenerationLoader from "./text-generation-loader"
 import ReasoningDisplay from "./reasoning-display"
 import TypingAnimation from "./typing-animation"
 import MessageActions from "./message-actions"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { useIsMobile } from "../hooks/use-mobile"
-// Import the AI service
 import { generateAIResponse } from "./ai-service"
 import FormattedText from "./formatted-text"
-// Import web search service
 import { performWebSearch, summarizeWebSearchResults, type TavilyImage } from "./web-search-service"
 import WebSearchResults from "./web-search-results"
+import SearchProgress from "./search-progress"
+import { checkApiKeysExist, getMissingApiKeys } from "@/utils/api-keys"
+import { analyzeImageWithVision, explainVisionResults } from "./vision-service"
+import ApiKeyWarning from "./api-key-warning"
 import ImageViewer from "./image-viewer"
 import WebSearchDropdown from "./web-search-dropdown"
-// Add these imports at the top
-import SearchProgress from "./search-progress"
-import ApiKeyWarning from "./api-key-warning"
-import { checkApiKeysExist, getMissingApiKeys } from "@/utils/api-keys"
-// Import vision service
-import { analyzeImageWithVision, explainVisionResults } from "./vision-service"
-// Add this import at the top with the other imports
+import DeleteConfirmation from "./delete-confirmation"
+import CanvasPanel from "./canvas-panel"
 
-// Update the OrphionChat component
 interface OrphionChatProps {
   initialMessage?: string
   onClose: () => void
@@ -123,7 +117,12 @@ export default function OrphionChat({
   const [initialImageProcessed, setInitialImageProcessed] = useState(false)
 
   // Add a new state variable for Monaco editor toggle
-  const [useMonacoEditor, setUseMonacoEditor] = useState(false)
+  const [useMonacoEditor, setUseMonacoEditor] = useState(true)
+
+  // Add state for canvas panel
+  const [isCanvasOpen, setIsCanvasOpen] = useState(false)
+  const [canvasContent, setCanvasContent] = useState("")
+  const [canvasMessageId, setCanvasMessageId] = useState<string | null>(null)
 
   // Function to get the icon based on selected mode
   const getModeIcon = (mode: string) => {
@@ -257,181 +256,46 @@ export default function OrphionChat({
     setRegeneratingMessageId(null)
   }
 
-  // Update mode when prop changes
-  useEffect(() => {
-    setCurrentMode(selectedMode)
-  }, [selectedMode])
+  // Function to open canvas with message content
+  const handleOpenCanvas = (messageId: string) => {
+    const message = messages.find((msg) => msg.id === messageId)
+    if (message) {
+      setCanvasContent(message.content)
+      setCanvasMessageId(messageId)
+      setIsCanvasOpen(true)
 
-  // Update search preferences when props change
-  useEffect(() => {
-    setLocalShowSearchSources(showSearchSources)
-  }, [showSearchSources])
-
-  useEffect(() => {
-    setLocalShowSearchImages(showSearchImages)
-  }, [showSearchImages])
-
-  // Set initial attached image if provided
-  useEffect(() => {
-    if (initialAttachedImage) {
-      setAttachedImage(initialAttachedImage)
-    }
-  }, [initialAttachedImage])
-
-  // Check for updates to the current session
-  useEffect(() => {
-    if (session) {
-      // Set up an interval to check for updates to the current session
-      const intervalId = setInterval(() => {
-        const chats = getSavedSessions()
-        const updatedSession = chats.find((chat) => chat.id === session.id)
-
-        if (updatedSession && updatedSession.messages.length !== session.messages.length) {
-          console.log("Session has been updated in storage, refreshing:", updatedSession.id)
-
-          // Update the session and messages
-          setSession(updatedSession)
-
-          // Process messages to mark AI messages as completed
-          const processedMessages = updatedSession.messages.map((msg) => {
-            if (msg.sender === "ai") {
-              // Add to completed message IDs
-              setCompletedMessageIds((prev) => new Set(prev).add(msg.id))
-              // Mark as not typing
-              return { ...msg, isTyping: false }
-            }
-            return msg
-          })
-
-          setMessages(processedMessages)
-
-          // Notify parent that chat has been updated
-          if (onChatUpdated) {
-            onChatUpdated(updatedSession)
-          }
-        }
-      }, 2000) // Check every 2 seconds
-
-      return () => clearInterval(intervalId)
-    }
-  }, [session, onChatUpdated])
-
-  // Initialize with the initial message if provided and no existing messages
-  useEffect(() => {
-    // Only process if we have an initial message, are pending creation, and aren't already processing
-    if ((initialMessage || initialAttachedImage) && isPendingCreation && !isProcessingInitialMessage && !session) {
-      // Check if both API keys exist
-      const { groq: missingGroq, tavily: missingTavily } = getMissingApiKeys()
-
-      if (missingGroq || missingTavily) {
-        setShowApiKeyWarning(true)
-        return
-      }
-
-      // Set flag to prevent multiple processing
-      setIsProcessingInitialMessage(true)
-
-      // Use default prompt if only image is attached with no text
-      const messageContent = initialMessage.trim() || (initialAttachedImage ? "What's in this image?" : "")
-
-      console.log("Processing initial message:", messageContent, "with image:", !!initialAttachedImage)
-
-      // Create a temporary user message for display
-      const tempUserMessage: Message = {
-        id: Date.now().toString(),
-        content: messageContent,
-        sender: "user",
-        timestamp: new Date(),
-        hasAttachedImage: !!initialAttachedImage,
-        imageData: initialAttachedImage || undefined,
-      }
-
-      setMessages([tempUserMessage])
-      setIsTyping(true)
-
-      // Create a new chat session
-      const newSession = createChatSession()
-
-      // Add the user message to the new session
-      const sessionWithUserMsg = addMessage(newSession, messageContent, "user", {
-        hasAttachedImage: !!initialAttachedImage,
-        imageData: initialAttachedImage || undefined,
-      })
-
-      // Set the session immediately to prevent duplicate processing
-      setSession(sessionWithUserMsg)
-
-      // Process the user message
-      processUserMessage(messageContent, sessionWithUserMsg, [tempUserMessage])
-
-      // Mark that we've processed the initial image
-      if (initialAttachedImage) {
-        setInitialImageProcessed(true)
+      // Close sidebar if it's open (via the parent component)
+      if (onSidebarToggle) {
+        onSidebarToggle()
       }
     }
-  }, [initialMessage, initialAttachedImage, isPendingCreation, isProcessingInitialMessage, session, onChatCreated])
+  }
 
-  // Update messages when session changes
-  useEffect(() => {
-    if (chatSession && !isPendingCreation) {
-      console.log("Updating session from props:", chatSession.id)
-      setSession(chatSession)
+  // Function to save edited content from canvas
+  const handleSaveCanvas = (content: string) => {
+    if (!canvasMessageId || !session) return
 
-      // Mark all AI messages as completed to prevent typing animation
-      const processedMessages = chatSession.messages.map((msg) => {
-        if (msg.sender === "ai") {
-          // Add to completed message IDs
-          setCompletedMessageIds((prev) => new Set(prev).add(msg.id))
-          // Mark as not typing
-          return { ...msg, isTyping: false }
+    // Update the message in state
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) => {
+        if (msg.id === canvasMessageId) {
+          return { ...msg, content }
         }
         return msg
-      })
+      }),
+    )
 
-      setMessages(processedMessages)
-    }
-  }, [chatSession, isPendingCreation])
+    // Update the message in storage
+    if (session) {
+      const updatedSession = updateMessage(session, canvasMessageId, { content })
+      setSession(updatedSession)
 
-  // Scroll to bottom when new messages are added or when typing status changes
-  useEffect(() => {
-    // Only scroll if there are messages
-    if (messages.length > 0) {
-      // Scroll to the latest message with a smooth animation
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
-  }, [messages, isTyping])
-
-  // Add a separate effect to handle initial scroll and when a message completes typing
-  useEffect(() => {
-    // This will ensure we scroll when a message finishes typing
-    if (completedMessageIds.size > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
-  }, [completedMessageIds.size])
-
-  // Focus input when component mounts or when typing finishes
-  useEffect(() => {
-    if (!isTyping && !isPendingCreation) {
-      setTimeout(() => {
-        inputRef.current?.focus()
-      }, 100)
-    }
-  }, [isTyping, isPendingCreation])
-
-  // Add an effect for auto-resizing the textarea
-  useEffect(() => {
-    if (inputRef.current) {
-      if (inputValue === "") {
-        // If input is empty, reset to minimum height
-        inputRef.current.style.height = "40px"
-      } else {
-        // Otherwise, adjust height based on content
-        inputRef.current.style.height = "40px"
-        const scrollHeight = Math.min(inputRef.current.scrollHeight, 72)
-        inputRef.current.style.height = `${scrollHeight}px`
+      // Notify parent that chat has been updated
+      if (onChatUpdated) {
+        onChatUpdated(updatedSession)
       }
     }
-  }, [inputValue])
+  }
 
   // Process image with vision model
   const processImageWithVision = async (
@@ -816,7 +680,196 @@ export default function OrphionChat({
     await processUserMessage(messageContent, updatedSession, updatedMessages)
   }
 
-  // Update the OrphionChat component to handle sending related questions directly
+  // Update mode when prop changes
+  useEffect(() => {
+    setCurrentMode(selectedMode)
+  }, [selectedMode])
+
+  // Update search preferences when props change
+  useEffect(() => {
+    setLocalShowSearchSources(showSearchSources)
+  }, [showSearchSources])
+
+  useEffect(() => {
+    setLocalShowSearchImages(showSearchImages)
+  }, [showSearchImages])
+
+  // Set initial attached image if provided
+  useEffect(() => {
+    if (initialAttachedImage) {
+      setAttachedImage(initialAttachedImage)
+    }
+  }, [initialAttachedImage])
+
+  // Check for updates to the current session
+  useEffect(() => {
+    if (session) {
+      // Set up an interval to check for updates to the current session
+      const intervalId = setInterval(() => {
+        const chats = getSavedSessions()
+        const updatedSession = chats.find((chat) => chat.id === session.id)
+
+        if (updatedSession && updatedSession.messages.length !== session.messages.length) {
+          console.log("Session has been updated in storage, refreshing:", updatedSession.id)
+
+          // Update the session and messages
+          setSession(updatedSession)
+
+          // Process messages to mark AI messages as completed
+          const processedMessages = updatedSession.messages.map((msg) => {
+            if (msg.sender === "ai") {
+              // Add to completed message IDs
+              setCompletedMessageIds((prev) => new Set(prev).add(msg.id))
+              // Mark as not typing
+              return { ...msg, isTyping: false }
+            }
+            return msg
+          })
+
+          setMessages(processedMessages)
+
+          // Notify parent that chat has been updated
+          if (onChatUpdated) {
+            onChatUpdated(updatedSession)
+          }
+        }
+      }, 2000) // Check every 2 seconds
+
+      return () => clearInterval(intervalId)
+    }
+  }, [session, onChatUpdated])
+
+  // Initialize with the initial message if provided and no existing messages
+  useEffect(() => {
+    // Only process if we have an initial message, are pending creation, and aren't already processing
+    if ((initialMessage || initialAttachedImage) && isPendingCreation && !isProcessingInitialMessage && !session) {
+      // Check if both API keys exist
+      const { groq: missingGroq, tavily: missingTavily } = getMissingApiKeys()
+
+      if (missingGroq || missingTavily) {
+        setShowApiKeyWarning(true)
+        return
+      }
+
+      // Set flag to prevent multiple processing
+      setIsProcessingInitialMessage(true)
+
+      // Use default prompt if only image is attached with no text
+      const messageContent = initialMessage.trim() || (initialAttachedImage ? "What's in this image?" : "")
+
+      console.log("Processing initial message:", messageContent, "with image:", !!initialAttachedImage)
+
+      // Create a temporary user message for display
+      const tempUserMessage: Message = {
+        id: Date.now().toString(),
+        content: messageContent,
+        sender: "user",
+        timestamp: new Date(),
+        hasAttachedImage: !!initialAttachedImage,
+        imageData: initialAttachedImage || undefined,
+      }
+
+      setMessages([tempUserMessage])
+      setIsTyping(true)
+
+      // Create a new chat session
+      const newSession = createChatSession()
+
+      // Add the user message to the new session
+      const sessionWithUserMsg = addMessage(newSession, messageContent, "user", {
+        hasAttachedImage: !!initialAttachedImage,
+        imageData: initialAttachedImage || undefined,
+      })
+
+      // Set the session immediately to prevent duplicate processing
+      setSession(sessionWithUserMsg)
+
+      // Process the user message
+      processUserMessage(messageContent, sessionWithUserMsg, [tempUserMessage])
+
+      // Mark that we've processed the initial image
+      if (initialAttachedImage) {
+        setInitialImageProcessed(true)
+      }
+    }
+  }, [initialMessage, initialAttachedImage, isPendingCreation, isProcessingInitialMessage, session, onChatCreated])
+
+  // Update messages when session changes
+  useEffect(() => {
+    if (chatSession && !isPendingCreation) {
+      console.log("Updating session from props:", chatSession.id)
+      setSession(chatSession)
+
+      // Mark all AI messages as completed to prevent typing animation
+      const processedMessages = chatSession.messages.map((msg) => {
+        if (msg.sender === "ai") {
+          // Add to completed message IDs
+          setCompletedMessageIds((prev) => new Set(prev).add(msg.id))
+          // Mark as not typing
+          return { ...msg, isTyping: false }
+        }
+        return msg
+      })
+
+      setMessages(processedMessages)
+    }
+  }, [chatSession, isPendingCreation])
+
+  // Scroll to bottom when new messages are added or when typing status changes
+  useEffect(() => {
+    // Only scroll if there are messages
+    if (messages.length > 0) {
+      // Scroll to the latest message with a smooth animation
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [messages, isTyping])
+
+  // Add a separate effect to handle initial scroll and when a message completes typing
+  useEffect(() => {
+    // This will ensure we scroll when a message finishes typing
+    if (completedMessageIds.size > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [completedMessageIds.size])
+
+  // Focus input when component mounts or when typing finishes
+  useEffect(() => {
+    if (!isTyping && !isPendingCreation) {
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+    }
+  }, [isTyping, isPendingCreation])
+
+  // Add an effect for auto-resizing the textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      if (inputValue === "") {
+        // If input is empty, reset to minimum height
+        inputRef.current.style.height = "40px"
+      } else {
+        // Otherwise, adjust height based on content
+        inputRef.current.style.height = "40px"
+        const scrollHeight = Math.min(inputRef.current.scrollHeight, 72)
+        inputRef.current.style.height = `${scrollHeight}px`
+      }
+    }
+  }, [inputValue])
+
+  // Add this useEffect to handle scroll detection
+  useEffect(() => {
+    const container = chatContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      // Show button when user scrolls up more than 300px from bottom
+      const isScrolledUp = container.scrollHeight - container.scrollTop - container.clientHeight > 300
+      setShowScrollButton(isScrolledUp)
+    }
+
+    container.addEventListener("scroll", handleScroll)
+    return () => container.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Submit on Enter without Shift
@@ -896,22 +949,10 @@ export default function OrphionChat({
     }
   }
 
-  // Add this useEffect to handle scroll detection
-  useEffect(() => {
-    const container = chatContainerRef.current
-    if (!container) return
-
-    const handleScroll = () => {
-      // Show button when user scrolls up more than 300px from bottom
-      const isScrolledUp = container.scrollHeight - container.scrollTop - container.clientHeight > 300
-      setShowScrollButton(isScrolledUp)
-    }
-
-    container.addEventListener("scroll", handleScroll)
-    return () => container.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  // Add this function inside the OrphionChat component
+  // Add this function to handle editor toggle
+  const handleToggleEditor = () => {
+    setUseMonacoEditor(!useMonacoEditor)
+  }
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -1127,6 +1168,9 @@ export default function OrphionChat({
                       <MessageActions
                         messageContent={message.content || ""}
                         onRegenerate={() => handleRegenerateMessage(message.id)}
+                        onOpenCanvas={() => handleOpenCanvas(message.id)}
+                        onToggleEditor={() => setUseMonacoEditor(!useMonacoEditor)}
+                        isMonacoEnabled={useMonacoEditor}
                         className={regeneratingMessageId === message.id ? "opacity-50 pointer-events-none" : ""}
                         isWebSearch={!!message.webSearchMetadata?.isWebSearch}
                       />
@@ -1248,7 +1292,6 @@ export default function OrphionChat({
                   >
                     {getModeIcon(currentMode)}
                     {!isMobile && <span className="text-xs text-white">{currentMode}</span>}
-                    <ChevronDown size={14} className="ml-1 text-white" />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-[#1a1a1a] border-neutral-800 text-white">
@@ -1270,23 +1313,20 @@ export default function OrphionChat({
               </DropdownMenu>
             </div>
 
-            {/* Web Search Button with Dropdown */}
-            <div className="relative flex items-center">
-              <div
-                className={`flex items-center border border-neutral-600 rounded-full px-2 py-1 hover:bg-neutral-800/50 transition-colors cursor-pointer bg-neutral-800/30 ${
-                  isTyping || isPendingCreation || !!attachedImage
-                    ? "opacity-50 cursor-not-allowed pointer-events-none"
-                    : ""
-                }`}
+            {/* Web search options button */}
+            <div className="relative">
+              <button
                 onClick={toggleWebSearchDropdown}
+                className={`text-neutral-400 hover:text-white transition-colors ${
+                  isTyping || isPendingCreation ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                disabled={isTyping || isPendingCreation}
               >
-                <Globe size={18} className="text-white" />
-                {!isMobile && <span className="ml-2 text-xs text-white">Search Option</span>}
-              </div>
+                <Globe size={18} />
+              </button>
 
-              {/* Web Search Dropdown */}
               <WebSearchDropdown
-                isOpen={showWebSearchDropdown && !isTyping && !isPendingCreation && !attachedImage}
+                isOpen={showWebSearchDropdown && !isTyping && !isPendingCreation}
                 onClose={() => setShowWebSearchDropdown(false)}
                 showSources={localShowSearchSources}
                 showImages={localShowSearchImages}
@@ -1314,48 +1354,53 @@ export default function OrphionChat({
                 </div>
               ) : (
                 <button
+                  onClick={handleAttachImage}
                   className={`text-neutral-400 hover:text-white transition-colors ${
                     isTyping || isPendingCreation ? "opacity-50 cursor-not-allowed" : ""
                   }`}
-                  onClick={handleAttachImage}
                   disabled={isTyping || isPendingCreation}
                   aria-label="Attach image"
-                  title="Attach image"
                 >
-                  <Paperclip size={18} className="translate-y-0.5" />
+                  <ImageIcon size={18} />
                 </button>
               )}
             </div>
 
             <button
+              onClick={handleSendMessage}
               className={`bg-red-700 hover:bg-red-600 p-2 rounded-full transition-colors ${
-                (!inputValue.trim() && !attachedImage) || isTyping || isPendingCreation
+                (inputValue.trim() === "" && !attachedImage) || isTyping || isPendingCreation
                   ? "opacity-50 cursor-not-allowed bg-neutral-700"
                   : ""
               }`}
-              onClick={handleSendMessage}
-              disabled={(!inputValue.trim() && !attachedImage) || isTyping || isPendingCreation}
+              disabled={(inputValue.trim() === "" && !attachedImage) || isTyping || isPendingCreation}
             >
-              <ArrowUp size={16} />
+              <ArrowUp size={14} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete confirmation modal */}
       <DeleteConfirmation
         isOpen={showDeleteConfirmation}
         onClose={() => setShowDeleteConfirmation(false)}
         onConfirm={confirmDeleteChat}
       />
 
-      {/* API Key Warning Modal */}
+      {/* API Key warning modal */}
       <ApiKeyWarning isOpen={showApiKeyWarning} onClose={() => setShowApiKeyWarning(false)} />
 
-      {/* Image Viewer Modal */}
+      {/* Image viewer modal */}
       {selectedImage && <ImageViewer image={selectedImage} onClose={() => setSelectedImage(null)} />}
 
-      {/* Add the CanvasPanel component at the end of the return statement, just before the closing </div> */}
+      {/* Canvas panel */}
+      <CanvasPanel
+        isOpen={isCanvasOpen}
+        onClose={() => setIsCanvasOpen(false)}
+        content={canvasContent}
+        onSave={handleSaveCanvas}
+      />
     </div>
   )
 }

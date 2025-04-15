@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, Copy, Download, List } from "lucide-react"
+import { Check, Copy, Download } from "lucide-react"
 import { getLanguageName } from "@/utils/code-utils"
 import { cn } from "@/lib/utils"
 import dynamic from "next/dynamic"
@@ -20,6 +20,7 @@ interface MonacoCodeBlockProps {
   language?: string
   title?: string
   children: string
+  initialContent?: string
   showLineNumbers?: boolean
   className?: string
   readOnly?: boolean
@@ -31,21 +32,26 @@ export default function MonacoCodeBlock({
   language = "javascript",
   title,
   children,
+  initialContent,
   showLineNumbers = true,
   className,
   readOnly = true,
   height = "300px",
   onChange,
 }: MonacoCodeBlockProps) {
+  // Use initialContent if provided, otherwise fall back to children
+  const contentToDisplay = initialContent || children
+
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
-  const [code, setCode] = useState(children)
-  const [editorMounted, setEditorMounted] = useState(false)
-  const [showMinimap, setShowMinimap] = useState(true)
+
+  // Make sure we don't lose any updates to children
+  const [code, setCode] = useState(contentToDisplay)
 
   useEffect(() => {
-    setCode(children)
-  }, [children])
+    // When children or initialContent props change, update the code state
+    setCode(initialContent || children)
+  }, [children, initialContent])
 
   const handleCopy = async () => {
     try {
@@ -114,10 +120,6 @@ export default function MonacoCodeBlock({
     }
   }
 
-  const handleEditorDidMount = () => {
-    setEditorMounted(true)
-  }
-
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
       setCode(value)
@@ -162,14 +164,6 @@ export default function MonacoCodeBlock({
         <span className="text-xs text-neutral-400 font-mono">{title || getLanguageName(language)}</span>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowMinimap(!showMinimap)}
-            className="text-neutral-400 hover:text-white transition-colors"
-            aria-label="Toggle sidebar"
-            title="Toggle sidebar"
-          >
-            <List size={16} />
-          </button>
-          <button
             onClick={handleDownload}
             className="text-neutral-400 hover:text-white transition-colors"
             aria-label="Download code"
@@ -198,7 +192,7 @@ export default function MonacoCodeBlock({
           options={{
             readOnly,
             minimap: {
-              enabled: showMinimap,
+              enabled: true,
               side: "right",
               showSlider: "mouseover",
               renderCharacters: false,
@@ -210,7 +204,8 @@ export default function MonacoCodeBlock({
             renderLineHighlight: "none",
             folding: true,
             fontSize: 14,
-            fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
+            fontFamily:
+              "var(--font-geist-mono), 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
             fontLigatures: true,
             tabSize: 2,
             automaticLayout: true,
@@ -231,7 +226,6 @@ export default function MonacoCodeBlock({
               bracketPairsHorizontal: true,
             },
           }}
-          onMount={handleEditorDidMount}
           onChange={handleEditorChange}
           className="monaco-editor-container"
         />

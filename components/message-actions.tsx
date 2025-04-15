@@ -1,27 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Copy, ThumbsUp, ThumbsDown, RefreshCw, Volume2 } from "lucide-react"
+import { Copy, RefreshCw, Volume2, Edit } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Update the MessageActionsProps interface to include onOpenCanvas
 interface MessageActionsProps {
   messageContent: string
   onRegenerate?: () => void
+  onOpenCanvas?: () => void
   className?: string
   isWebSearch?: boolean
 }
 
-// Update the function parameters to include onOpenCanvas
 export default function MessageActions({
   messageContent,
   onRegenerate,
+  onOpenCanvas,
   className,
   isWebSearch = false,
 }: MessageActionsProps) {
   const [copied, setCopied] = useState(false)
-  const [liked, setLiked] = useState(false)
-  const [disliked, setDisliked] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
   const [voicesLoaded, setVoicesLoaded] = useState(false)
@@ -49,11 +47,6 @@ export default function MessageActions({
     }
   }, [])
 
-  // Add this useEffect to log when the component renders or updates
-  useEffect(() => {
-    console.log("MessageActions rendered with content:", messageContent?.substring(0, 20))
-  }, [messageContent])
-
   // Copy message to clipboard
   const handleCopy = async () => {
     try {
@@ -67,21 +60,14 @@ export default function MessageActions({
     }
   }
 
-  // Handle like action
-  const handleLike = () => {
-    setLiked(!liked)
-    if (disliked) setDisliked(false)
-  }
-
-  // Handle dislike action
-  const handleDislike = () => {
-    setDisliked(!disliked)
-    if (liked) setLiked(false)
-  }
-
   // Handle regenerate action
   const handleRegenerate = () => {
     if (onRegenerate) onRegenerate()
+  }
+
+  // Handle canvas action
+  const handleOpenCanvas = () => {
+    if (onOpenCanvas) onOpenCanvas()
   }
 
   // Get the best available voice
@@ -177,30 +163,6 @@ export default function MessageActions({
         <Copy size={16} />
       </button>
 
-      <button
-        onClick={handleLike}
-        className={cn(
-          "p-1 hover:text-neutral-300 transition-colors rounded-md hover:bg-neutral-800/50",
-          liked && "text-green-500 hover:text-green-400",
-        )}
-        aria-label="Like message"
-        title="Like message"
-      >
-        <ThumbsUp size={16} />
-      </button>
-
-      <button
-        onClick={handleDislike}
-        className={cn(
-          "p-1 hover:text-neutral-300 transition-colors rounded-md hover:bg-neutral-800/50",
-          disliked && "text-red-500 hover:text-red-400",
-        )}
-        aria-label="Dislike message"
-        title="Dislike message"
-      >
-        <ThumbsDown size={16} />
-      </button>
-
       {/* Only show regenerate button if not a web search result and onRegenerate is provided */}
       {!isWebSearch && onRegenerate && (
         <button
@@ -223,6 +185,16 @@ export default function MessageActions({
         title={speaking ? "Stop speaking" : "Speak message"}
       >
         <Volume2 size={16} />
+      </button>
+
+      {/* Canvas button */}
+      <button
+        onClick={handleOpenCanvas}
+        className="p-1 hover:text-neutral-300 transition-colors rounded-md hover:bg-neutral-800/50"
+        aria-label="Open in canvas"
+        title="Open in canvas"
+      >
+        <Edit size={16} />
       </button>
     </div>
   )

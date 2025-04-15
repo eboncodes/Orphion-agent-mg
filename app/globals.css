@@ -33,6 +33,16 @@
     --ring: 0 0% 3.9%;
 
     --radius: 0.5rem;
+
+    /* Chart colors */
+    --chart-1: 0 84% 60%; /* Red */
+    --chart-2: 217 91% 60%; /* Blue */
+    --chart-3: 142 71% 45%; /* Green */
+    --chart-4: 47 100% 50%; /* Yellow */
+    --chart-5: 283 39% 53%; /* Purple */
+    --chart-6: 31 100% 60%; /* Orange */
+    --chart-7: 187 100% 42%; /* Cyan */
+    --chart-8: 338 85% 60%; /* Pink */
   }
 
   .dark {
@@ -353,11 +363,12 @@ textarea::placeholder {
   font-family: var(--font-merriweather), serif !important;
 }
 
+/* Update the Monaco Editor styles section to use Geist Mono */
 /* Monaco Editor styles */
 .monaco-editor-container {
   border-radius: 0 0 0.5rem 0.5rem;
   overflow: hidden;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace !important;
+  font-family: var(--font-geist-mono), "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace !important;
 }
 
 .monaco-editor {
@@ -381,7 +392,7 @@ textarea::placeholder {
   border: 1px solid #333;
   border-bottom: none;
   position: relative;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace !important;
+  font-family: var(--font-geist-mono), "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace !important;
 }
 
 /* Monospace font for code elements */
@@ -390,7 +401,7 @@ pre,
 .monaco-editor,
 .monaco-editor-container,
 .code-header {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace !important;
+  font-family: var(--font-geist-mono), "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace !important;
 }
 
 /* Minimap styling */
@@ -416,4 +427,145 @@ pre,
 
 .code-header button:active {
   transform: scale(0.95);
+}
+
+/* MathJax styling */
+.mathjax-renderer {
+  font-size: 1.1em;
+}
+
+.mathjax-block {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.mathjax-inline {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0 0.2rem;
+}
+
+/* Ensure MathJax elements are visible in dark mode */
+.MathJax {
+  color: #f8f8f8 !important;
+}
+
+.MathJax svg {
+  fill: #f8f8f8 !important;
+}
+
+/* Fallback math renderer styling */
+.fallback-math-renderer {
+  font-family: "Times New Roman", serif;
+  line-height: 1.5;
+  padding: 0.5rem;
+  background-color: rgba(30, 30, 30, 0.3);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.fallback-math {
+  font-family: "Times New Roman", serif;
+  background-color: rgba(30, 30, 30, 0.3);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.fallback-math.block {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 1rem 0;
+  padding: 0.5rem;
+}
+
+.fallback-math.inline {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Loading indicator for math */
+.loading-math {
+  display: inline-block;
+  padding: 0.2rem 0.4rem;
+  background-color: rgba(30, 30, 30, 0.3);
+  border-radius: 4px;
+  color: #aaa;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+/* Trigonometric function styling */
+.math-trig {
+  font-family: "Times New Roman", serif;
+  font-style: italic;
+  font-weight: normal;
+  margin-right: 0.1em;
+}
+
+/* Improved math renderer styling */
+.math-renderer {
+  font-family: "Times New Roman", serif;
+  line-height: 1.5;
+  padding: 0.5rem;
+  background-color: rgba(30, 30, 30, 0.3);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.math-block {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 1rem 0;
+  font-size: 1.2em;
+  color: #f8f8f8;
+}
+
+.math-inline {
+  display: inline-block;
+  vertical-align: middle;
+  color: #f8f8f8;
+  padding: 0 0.2rem;
+  background-color: transparent;
+}
+
+/* Table styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  overflow-x: auto;
+  display: block;
+}
+
+@media (min-width: 640px) {
+  table {
+    display: table;
+  }
+}
+
+th,
+td {
+  padding: 0.5rem 1rem;
+  text-align: left;
+  border: 1px solid #333;
+}
+
+th {
+  background-color: #1a1a1a;
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background-color: rgba(30, 30, 30, 0.3);
+}
+
+tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
