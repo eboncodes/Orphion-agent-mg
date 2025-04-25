@@ -1,12 +1,20 @@
 "use client"
 
+import { cn } from "@/lib/utils"
+
 interface FallbackMathRendererProps {
   math: string
   block?: boolean
   className?: string
+  theme?: "light" | "dark"
 }
 
-export default function FallbackMathRenderer({ math, block = false, className = "" }: FallbackMathRendererProps) {
+export default function FallbackMathRenderer({
+  math,
+  block = false,
+  className = "",
+  theme = "dark",
+}: FallbackMathRendererProps) {
   // Process the math content with basic formatting
   const processedMath = (content: string): string => {
     let result = content.trim()
@@ -39,7 +47,12 @@ export default function FallbackMathRenderer({ math, block = false, className = 
 
   return (
     <div
-      className={`fallback-math-renderer ${block ? "math-block" : "math-inline"} ${className}`}
+      className={cn(
+        `fallback-math-renderer ${block ? "math-block" : "math-inline"}`,
+        theme === "light" ? "math-light bg-transparent text-black" : "math-dark",
+        className,
+      )}
+      style={theme === "light" ? { backgroundColor: "transparent", color: "#000" } : {}}
       dangerouslySetInnerHTML={{ __html: processedMath(math) }}
     />
   )

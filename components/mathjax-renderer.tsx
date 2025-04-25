@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { cn } from "@/lib/utils"
 
 // MathJax CSS and script loader component
 const MathJaxLoader = () => {
@@ -53,9 +54,16 @@ interface MathJaxRendererProps {
   block?: boolean
   className?: string
   onError?: () => void
+  theme?: "light" | "dark"
 }
 
-export default function MathJaxRenderer({ math, block = false, className = "", onError }: MathJaxRendererProps) {
+export default function MathJaxRenderer({
+  math,
+  block = false,
+  className = "",
+  onError,
+  theme = "dark",
+}: MathJaxRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [rendered, setRendered] = useState(false)
@@ -89,6 +97,15 @@ export default function MathJaxRenderer({ math, block = false, className = "", o
         if (window.MathJax) {
           try {
             await window.MathJax.typesetPromise([containerRef.current])
+
+            // Apply theme-specific styling after rendering
+            if (theme === "light" && containerRef.current) {
+              const svgElements = containerRef.current.querySelectorAll("svg")
+              svgElements.forEach((svg) => {
+                svg.style.fill = "#000"
+              })
+            }
+
             setRendered(true)
           } catch (err) {
             console.error("MathJax typesetting error:", err)
@@ -100,7 +117,16 @@ export default function MathJaxRenderer({ math, block = false, className = "", o
             if (window.MathJax) {
               clearInterval(checkMathJax)
               window.MathJax.typesetPromise([containerRef.current])
-                .then(() => setRendered(true))
+                .then(() => {
+                  // Apply theme-specific styling after rendering
+                  if (theme === "light" && containerRef.current) {
+                    const svgElements = containerRef.current.querySelectorAll("svg")
+                    svgElements.forEach((svg) => {
+                      svg.style.fill = "#000"
+                    })
+                  }
+                  setRendered(true)
+                })
                 .catch((err: any) => {
                   console.error("MathJax typesetting error:", err)
                   setError(err instanceof Error ? err.message : "Failed to render math")
@@ -126,7 +152,7 @@ export default function MathJaxRenderer({ math, block = false, className = "", o
     }
 
     renderMath()
-  }, [math, block, onError, rendered])
+  }, [math, block, onError, rendered, theme])
 
   // Fallback rendering when MathJax fails
   if (error && !rendered) {
@@ -142,7 +168,11 @@ export default function MathJaxRenderer({ math, block = false, className = "", o
       <MathJaxLoader />
       <div
         ref={containerRef}
-        className={`mathjax-renderer ${block ? "mathjax-block" : "mathjax-inline"} ${className}`}
+        className={cn(
+          `mathjax-renderer ${block ? "mathjax-block" : "mathjax-inline"}`,
+          theme === "light" ? "mathjax-light" : "mathjax-dark",
+          className,
+        )}
       />
     </>
   )

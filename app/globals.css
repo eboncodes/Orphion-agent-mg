@@ -569,3 +569,52 @@ tr:nth-child(even) {
 tr:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
+
+/* Light theme styles for math rendering */
+.math-light,
+.mathjax-light {
+  color: #000 !important;
+  background-color: transparent !important;
+}
+
+.mathjax-light .MathJax {
+  color: #000 !important;
+}
+
+.mathjax-light .MathJax svg {
+  fill: #000 !important;
+}
+
+/* Canvas-specific styles */
+.canvas-content table {
+  background-color: transparent !important;
+}
+
+.canvas-content table th,
+.canvas-content table td {
+  background-color: transparent !important;
+  color: #000 !important;
+  border: 1px solid #000 !important;
+}
+
+.canvas-content table tr:nth-child(even),
+.canvas-content table tr:nth-child(odd),
+.canvas-content table tr:hover {
+  background-color: transparent !important;
+}
+
+/* Fix for math display in canvas */
+.canvas-content .math-renderer,
+.canvas-content .mathjax-renderer,
+.canvas-content .fallback-math-renderer {
+  color: #000 !important;
+  background-color: transparent !important;
+}
+
+.canvas-content .MathJax {
+  color: #000 !important;
+}
+
+.canvas-content .MathJax svg {
+  fill: #000 !important;
+}

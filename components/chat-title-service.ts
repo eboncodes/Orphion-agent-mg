@@ -10,24 +10,24 @@ IMPORTANT RULES:
 1. Create a short, specific title (2-5 words) that captures the MAIN TOPIC or QUESTION discussed.
 2. Focus on SPECIFIC SUBJECTS, CONCEPTS, or ACTIONS mentioned in the conversation.
 3. NEVER use generic phrases like:
-  - "Starting our conversation"
-  - "Hello"
-  - "Assistance needed"
-  - "Chat about..."
-  - "Discussion on..."
-  - "Conversation regarding..."
-  - "Help with..."
-  - "Information on..."
-  - "Question about..."
-  - "Inquiry regarding..."
-  - "Assistance with..."
+ - "Starting our conversation"
+ - "Hello"
+ - "Assistance needed"
+ - "Chat about..."
+ - "Discussion on..."
+ - "Conversation regarding..."
+ - "Help with..."
+ - "Information on..."
+ - "Question about..."
+ - "Inquiry regarding..."
+ - "Assistance with..."
 
 4. INSTEAD, extract the SPECIFIC TOPIC, like:
-  - "Paris Travel Tips" (not "Travel Assistance")
-  - "JavaScript Array Methods" (not "Programming Help")
-  - "Vegan Dinner Recipes" (not "Food Discussion")
-  - "Climate Change Solutions" (not "Environmental Information")
-  - "Resume Writing Tips" (not "Career Assistance")
+ - "Paris Travel Tips" (not "Travel Assistance")
+ - "JavaScript Array Methods" (not "Programming Help")
+ - "Vegan Dinner Recipes" (not "Food Discussion")
+ - "Climate Change Solutions" (not "Environmental Information")
+ - "Resume Writing Tips" (not "Career Assistance")
 
 5. Return ONLY the title text with NO additional formatting, quotes, or explanation.
 6. Use proper title case (capitalize first letter of each major word, not all caps).`
@@ -79,14 +79,23 @@ Title:`
  */
 async function generateTitle(prompt: string): Promise<string> {
   try {
+    // Import the API key utility
+    const { getApiKeys } = await import("@/utils/api-keys")
+    const { groqApiKey } = getApiKeys()
+
+    // If no API key is provided, throw a clear error
+    if (!groqApiKey || groqApiKey.trim() === "") {
+      throw new Error("No GROQ API key provided. Please add your API key in the settings.")
+    }
+
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY || "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"}`,
+        Authorization: `Bearer ${groqApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: TITLE_GENERATION_MODEL,
+        model: "llama-3.1-8b-instant",
         messages: [
           { role: "system", content: TITLE_SYSTEM_PROMPT },
           { role: "user", content: prompt },

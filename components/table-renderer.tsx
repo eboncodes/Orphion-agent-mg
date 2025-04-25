@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils"
 interface TableRendererProps {
   tableRows: string[]
   className?: string
+  theme?: "light" | "dark"
 }
 
-export default function TableRenderer({ tableRows, className }: TableRendererProps) {
+export default function TableRenderer({ tableRows, className, theme = "dark" }: TableRendererProps) {
   // Parse the table rows into header and body
   const parseTable = () => {
     if (tableRows.length < 2) return { headers: [], rows: [] }
@@ -41,9 +42,17 @@ export default function TableRenderer({ tableRows, className }: TableRendererPro
     <div className={cn("overflow-x-auto", className)}>
       <table className="w-full border-collapse">
         <thead>
-          <tr className="bg-neutral-800 text-left">
+          <tr className={theme === "light" ? "bg-transparent text-left" : "bg-neutral-800 text-left"}>
             {headers.map((header, index) => (
-              <th key={index} className="px-4 py-2 border border-neutral-700 font-medium">
+              <th
+                key={index}
+                className={cn(
+                  "px-4 py-2 font-medium",
+                  theme === "light"
+                    ? "border border-black text-black bg-transparent"
+                    : "border border-neutral-700 text-white",
+                )}
+              >
                 {header}
               </th>
             ))}
@@ -51,9 +60,22 @@ export default function TableRenderer({ tableRows, className }: TableRendererPro
         </thead>
         <tbody>
           {rows.map((row, rowIndex) => (
-            <tr key={rowIndex} className={rowIndex % 2 === 0 ? "bg-neutral-900" : "bg-neutral-800/50"}>
+            <tr
+              key={rowIndex}
+              className={
+                theme === "light" ? "bg-transparent" : rowIndex % 2 === 0 ? "bg-neutral-900" : "bg-neutral-800/50"
+              }
+            >
               {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className="px-4 py-2 border border-neutral-700">
+                <td
+                  key={cellIndex}
+                  className={cn(
+                    "px-4 py-2",
+                    theme === "light"
+                      ? "border border-black text-black bg-transparent"
+                      : "border border-neutral-700 text-white",
+                  )}
+                >
                   {cell}
                 </td>
               ))}

@@ -22,9 +22,18 @@ const MonacoCodeBlock = dynamic(() => import("./monaco-code-block"), {
 interface FormattedTextProps {
   text: string
   className?: string
+  useMonaco?: boolean
+  useMathjax?: boolean
+  theme?: "light" | "dark"
 }
 
-export default function FormattedText({ text, className }: FormattedTextProps) {
+export default function FormattedText({
+  text,
+  className,
+  useMonaco = true,
+  useMathjax = false,
+  theme = "dark",
+}: FormattedTextProps) {
   const [mathjaxFailed, setMathjaxFailed] = useState(false)
 
   // Process the text to apply formatting
@@ -100,7 +109,7 @@ export default function FormattedText({ text, className }: FormattedTextProps) {
         inTableBlock = false
         result.push(
           <div key={`table-${tableRows.join("-").hashCode()}`} className="my-4">
-            <TableRenderer tableRows={tableRows} />
+            <TableRenderer tableRows={tableRows} theme={theme} />
           </div>,
         )
       }
@@ -124,9 +133,14 @@ export default function FormattedText({ text, className }: FormattedTextProps) {
           result.push(
             <div key={`math-block-${mathBlockIndex++}`} className="my-4 flex justify-center">
               {mathjaxFailed ? (
-                <FallbackMathRenderer math={mathBlockContent} block={true} />
+                <FallbackMathRenderer math={mathBlockContent} block={true} theme={theme} />
               ) : (
-                <MathJaxRenderer math={mathBlockContent} block={true} onError={() => setMathjaxFailed(true)} />
+                <MathJaxRenderer
+                  math={mathBlockContent}
+                  block={true}
+                  onError={() => setMathjaxFailed(true)}
+                  theme={theme}
+                />
               )}
             </div>,
           )
@@ -211,9 +225,9 @@ export default function FormattedText({ text, className }: FormattedTextProps) {
           result.push(
             <div key={`math-block-${mathBlockIndex++}`} className="my-4 flex justify-center">
               {mathjaxFailed ? (
-                <FallbackMathRenderer math={mathContent} block={true} />
+                <FallbackMathRenderer math={mathContent} block={true} theme={theme} />
               ) : (
-                <MathJaxRenderer math={mathContent} block={true} onError={() => setMathjaxFailed(true)} />
+                <MathJaxRenderer math={mathContent} block={true} onError={() => setMathjaxFailed(true)} theme={theme} />
               )}
             </div>,
           )
@@ -238,9 +252,14 @@ export default function FormattedText({ text, className }: FormattedTextProps) {
             result.push(
               <div key={`math-block-${mathBlockIndex++}`} className="my-4 flex justify-center">
                 {mathjaxFailed ? (
-                  <FallbackMathRenderer math={mathContent} block={true} />
+                  <FallbackMathRenderer math={mathContent} block={true} theme={theme} />
                 ) : (
-                  <MathJaxRenderer math={mathContent} block={true} onError={() => setMathjaxFailed(true)} />
+                  <MathJaxRenderer
+                    math={mathContent}
+                    block={true}
+                    onError={() => setMathjaxFailed(true)}
+                    theme={theme}
+                  />
                 )}
               </div>,
             )
@@ -343,9 +362,14 @@ export default function FormattedText({ text, className }: FormattedTextProps) {
       result.push(
         <div key={`math-block-${mathBlockIndex}`} className="my-4 flex justify-center">
           {mathjaxFailed ? (
-            <FallbackMathRenderer math={mathBlockContent} block={true} />
+            <FallbackMathRenderer math={mathBlockContent} block={true} theme={theme} />
           ) : (
-            <MathJaxRenderer math={mathBlockContent} block={true} onError={() => setMathjaxFailed(true)} />
+            <MathJaxRenderer
+              math={mathBlockContent}
+              block={true}
+              onError={() => setMathjaxFailed(true)}
+              theme={theme}
+            />
           )}
         </div>,
       )
@@ -354,7 +378,7 @@ export default function FormattedText({ text, className }: FormattedTextProps) {
     if (inTableBlock && tableRows.length > 0) {
       result.push(
         <div key={`table-${tableRows.join("-").hashCode()}`} className="my-4">
-          <TableRenderer tableRows={tableRows} />
+          <TableRenderer tableRows={tableRows} theme={theme} />
         </div>,
       )
     }
@@ -381,7 +405,7 @@ export default function FormattedText({ text, className }: FormattedTextProps) {
     }
 
     return result
-  }, [text, mathjaxFailed])
+  }, [text, mathjaxFailed, theme])
 
   // Process inline formatting like bold, italic, code, math, etc.
   function processInlineFormatting(text: string) {
@@ -425,9 +449,9 @@ export default function FormattedText({ text, className }: FormattedTextProps) {
       const mathContent = currentText.substring(startIndex + 1, endIndex)
       segments.push(
         mathjaxFailed ? (
-          <FallbackMathRenderer key={key++} math={mathContent} />
+          <FallbackMathRenderer key={key++} math={mathContent} theme={theme} />
         ) : (
-          <MathJaxRenderer key={key++} math={mathContent} onError={() => setMathjaxFailed(true)} />
+          <MathJaxRenderer key={key++} math={mathContent} onError={() => setMathjaxFailed(true)} theme={theme} />
         ),
       )
 

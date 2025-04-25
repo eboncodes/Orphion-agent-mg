@@ -137,33 +137,54 @@ export const generateAndUpdateTitle = async (session: ChatSession): Promise<Chat
     }
     saveSessionToLocalStorage(updatedSession)
 
-    // Generate the title
-    const title = await generateChatTitle(session)
+    try {
+      // Generate the title
+      const title = await generateChatTitle(session)
 
-    // Check if the title is too generic or too short
-    const isTitleGeneric = title === "New Chat" || title.length < 5
+      // Check if the title is too generic or too short
+      const isTitleGeneric = title === "New Chat" || title.length < 5
 
-    // If title is generic and we haven't tried too many times, use fallback method
-    let finalTitle = title
-    if (isTitleGeneric && updatedSession.titleGenerationAttempts < 3) {
-      // Try extracting key topics as a fallback
-      const extractedTopics = extractKeyTopics(session.messages)
-      if (extractedTopics && extractedTopics !== "New Chat") {
-        finalTitle = extractedTopics
+      // If title is generic and we haven't tried too many times, use fallback method
+      let finalTitle = title
+      if (isTitleGeneric && updatedSession.titleGenerationAttempts < 3) {
+        // Try extracting key topics as a fallback
+        const extractedTopics = extractKeyTopics(session.messages)
+        if (extractedTopics && extractedTopics !== "New Chat") {
+          finalTitle = extractedTopics
+        }
       }
+
+      // Update the session with the new title
+      const sessionWithTitle = {
+        ...updatedSession,
+        title: finalTitle,
+        titleGenerated: true,
+      }
+
+      // Save to local storage
+      saveSessionToLocalStorage(sessionWithTitle)
+
+      return sessionWithTitle
+    } catch (error) {
+      console.error("Error generating title:", error)
+
+      // Use fallback method if title generation fails
+      const extractedTopics = extractKeyTopics(session.messages)
+      const fallbackTitle =
+        extractedTopics && extractedTopics !== "New Chat" ? extractedTopics : `Chat ${new Date().toLocaleString()}`
+
+      // Update the session with the fallback title
+      const sessionWithFallbackTitle = {
+        ...updatedSession,
+        title: fallbackTitle,
+        titleGenerated: true,
+      }
+
+      // Save to local storage
+      saveSessionToLocalStorage(sessionWithFallbackTitle)
+
+      return sessionWithFallbackTitle
     }
-
-    // Update the session with the new title
-    const sessionWithTitle = {
-      ...updatedSession,
-      title: finalTitle,
-      titleGenerated: true,
-    }
-
-    // Save to local storage
-    saveSessionToLocalStorage(sessionWithTitle)
-
-    return sessionWithTitle
   } catch (error) {
     console.error("Error generating and updating title:", error)
     return session

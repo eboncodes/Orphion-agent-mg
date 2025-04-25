@@ -1,5 +1,5 @@
 // Update the system prompt to focus on 2025 content
-const SYSTEM_PROMPT = `You are Orphion, an AI agent with web search capabilities programmed by TEJAI (Tech Enhanced Journey AI).
+const SYSTEM_PROMPT = `You are Orphion, an AI agent with web search capabilities programmed by TEJ intelligence platform (Tech Enhanced Journey intelligence).
 
 IMPORTANT: You have the ability to search the web when needed. Analyze each user message carefully to determine if web search is required:
 
@@ -82,7 +82,90 @@ export interface AIResponseWithReasoning {
   searchQuery?: string
 }
 
-// Generate AI response using Groq API
+// Add this function after the imports and before the generateAIResponse function
+// Function to check for predefined responses to specific questions
+const getPreDefinedResponse = (prompt: string): string | null => {
+  // Convert prompt to lowercase for case-insensitive matching
+  const lowerPrompt = prompt.toLowerCase().trim()
+
+  // Check for identity questions
+  if (
+    lowerPrompt.includes("who are you") ||
+    lowerPrompt.includes("what are you") ||
+    lowerPrompt === "who r u" ||
+    lowerPrompt === "what r u" ||
+    lowerPrompt.includes("introduce yourself") ||
+    lowerPrompt.includes("your name") ||
+    lowerPrompt.includes("who is orphion")
+  ) {
+    return "I am Orphion, an AI Agent to help you in deep learning and research."
+  }
+
+  // Check for creator questions
+  if (
+    lowerPrompt.includes("who create") ||
+    lowerPrompt.includes("who made") ||
+    lowerPrompt.includes("who built") ||
+    lowerPrompt.includes("who developed") ||
+    lowerPrompt.includes("who programmed") ||
+    lowerPrompt.includes("your creator") ||
+    lowerPrompt.includes("your developer")
+  ) {
+    return "I am mainly Funded and Created by TEJ intelligence Platform (Tech Enhanced Journey intelligence)."
+  }
+
+  // Check for ownership questions
+  if (
+    lowerPrompt.includes("who owns") ||
+    lowerPrompt.includes("who is the owner") ||
+    lowerPrompt.includes("ownership") ||
+    lowerPrompt.includes("who runs") ||
+    lowerPrompt.includes("who manages") ||
+    lowerPrompt.includes("who is behind") ||
+    lowerPrompt.includes("founder") ||
+    lowerPrompt.includes("ceo") ||
+    lowerPrompt.includes("director")
+  ) {
+    return `Md Ajmayeen Intisar Mahee is the founder, chief Adviser & ED (Executive Director) at this Platform and Hisham Sardar Ebon is the founder, instructor & CEO (Chief Executive Officer) at this platform.
+
+Also our logistic supporters are:
+- Safiur Rahman Sohel, Science & ICT Teacher in Nilphamari Govt High School, Nilphamari
+- Biplob Kumar Dash, Math and ICT teacher in Nilphamari Govt High School, Nilphamari
+
+More information:
+
+**Md Ajmayeen Intisar Mahee**
+- Founder, Chief Adviser & ED (Executive Director) at this Platform
+- Professional in Management and maintenance
+- Illustration and graphics specialist
+- Market strategy Researcher
+
+**Hisham Sardar Ebon**
+- Founder, instructor & CEO (Chief Executive Officer) at this platform
+- API and Github production and deployment specialist
+- Artificial Intelligence Researcher
+- Front-end & Back-end Developer
+- Hardware & Robotics developer`
+  }
+
+  // Check for questions about TEJ intelligence platform
+  if (
+    lowerPrompt.includes("tej intelligence") ||
+    lowerPrompt.includes("tej platform") ||
+    lowerPrompt.includes("about tej") ||
+    lowerPrompt.includes("tell me about tej") ||
+    lowerPrompt.includes("information about tej") ||
+    lowerPrompt.includes("what is tej")
+  ) {
+    return "TEJ intelligence platform is the first AI platform in Bangladesh, which makes AI tools and services. It's pioneering artificial intelligence development in the country, creating innovative solutions and applications. For more information, please visit [tejintelligence.com](https://tejintelligence.com)"
+  }
+
+  // No predefined response matches
+  return null
+}
+
+// Now modify the generateAIResponse function to check for predefined responses first
+// Update the beginning of the generateAIResponse function
 export const generateAIResponse = async (
   prompt: string,
   conversationHistory: any[] = [],
@@ -93,7 +176,18 @@ export const generateAIResponse = async (
   }
 
   try {
+    // Check for predefined responses first
+    const predefinedResponse = getPreDefinedResponse(prompt)
+    if (predefinedResponse) {
+      return {
+        response: predefinedResponse,
+        needsWebSearch: false,
+      }
+    }
+
     isGeneratingResponse = true
+
+    // Rest of the function remains the same...
 
     // Create messages array with system prompt and conversation history
     const messages = [

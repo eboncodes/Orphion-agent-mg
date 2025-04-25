@@ -1,5 +1,6 @@
 import type React from "react"
 import { Merriweather, Geist_Mono } from "next/font/google"
+import { AuthProvider } from "@/context/auth-context"
 import "./globals.css"
 
 const merriweather = Merriweather({
@@ -29,13 +30,12 @@ export default function RootLayout({
         }
       `}</style>
       </head>
-      <body className="font-serif">{children}</body>
+      <body className="font-serif">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }
-
-
-import './globals.css'
 
 export const metadata = {
       generator: 'v0.dev'
