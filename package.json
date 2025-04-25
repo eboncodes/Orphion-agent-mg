@@ -61,7 +61,6 @@
     "@emotion/is-prop-valid": "latest",
     "monaco-editor": "latest",
     "uuid": "latest",
-    "@supabase/supabase-js": "latest",
     "@tailwindcss/typography": "latest",
     "framer-motion": "latest",
     "@monaco-editor/react": "latest",

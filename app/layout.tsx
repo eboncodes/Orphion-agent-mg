@@ -1,42 +1,26 @@
 import type React from "react"
-import { Merriweather, Geist_Mono } from "next/font/google"
-import { AuthProvider } from "@/context/auth-context"
 import "./globals.css"
+import { Merriweather } from "next/font/google"
+import { AuthProvider } from "@/context/auth-context"
 
 const merriweather = Merriweather({
+  weight: ["300", "400", "700", "900"],
   subsets: ["latin"],
   variable: "--font-merriweather",
-  weight: ["300", "400", "700", "900"],
-  display: "swap",
 })
 
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-  display: "swap",
-})
+export const metadata = {
+  title: "Orphion AI",
+  description: "A powerful AI assistant",
+    generator: 'v0.dev'
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${merriweather.variable} ${geistMono.variable}`}>
-      <head>
-        <style>{`
-        body, input, textarea, button, div, span, p, h1, h2, h3, h4, h5, h6 {
-          font-family: var(--font-merriweather), serif !important;
-        }
-      `}</style>
-      </head>
-      <body className="font-serif">
+    <html lang="en">
+      <body className={merriweather.className}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )
 }
-
-export const metadata = {
-      generator: 'v0.dev'
-    };
