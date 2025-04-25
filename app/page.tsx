@@ -1,6 +1,5 @@
-import OrphionUI from "../orphion-ui.tsx"
+import OrphionClientWrapper from "../components/orphion-client-wrapper"
 
 export default function Page() {
-  // The AuthProvider is already in the layout.tsx file, so we just need to render OrphionUI
-  return <OrphionUI />
+  return <OrphionClientWrapper />
 }

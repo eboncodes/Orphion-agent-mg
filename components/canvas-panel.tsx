@@ -80,11 +80,27 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
   const [isImporting, setIsImporting] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [isClient, setIsClient] = useState(false)
 
   // Update edited content when the input content changes
   useEffect(() => {
     setEditedContent(content)
   }, [content])
+
+  useEffect(() => {
+    setIsClient(true)
+
+    if (!canvasRef.current) return
+
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext("2d")
+
+    if (!ctx) return
+
+    // Canvas operations here
+    // ...
+  }, [])
 
   // Handle save
   const handleSave = () => {
@@ -503,9 +519,12 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                 placeholder="Edit content..."
               />
             ) : (
-              <div ref={contentRef} className="prose prose-lg max-w-none text-gray-900 canvas-content">
-                <FormattedText text={editedContent} useMonaco={false} useMathjax={true} theme="light" />
-              </div>
+              <>
+                <div ref={contentRef} className="prose prose-lg max-w-none text-gray-900 canvas-content">
+                  <FormattedText text={editedContent} useMonaco={false} useMathjax={true} theme="light" />
+                </div>
+                {isClient && <canvas ref={canvasRef} width={500} height={300} className="border" />}
+              </>
             )}
           </div>
         </div>

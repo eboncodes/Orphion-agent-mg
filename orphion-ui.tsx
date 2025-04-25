@@ -6,6 +6,7 @@ import MessageBox from "./components/message-box"
 import ArchivesView from "./components/archives-view"
 import { type ChatSession, getSavedSessions } from "./components/chat-storage-service"
 import { useIsMobile } from "./hooks/use-mobile"
+import ClientOnly from "./components/client-only"
 
 function OrphionUIContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -246,13 +247,16 @@ function OrphionUIContent() {
 // Keep the OrphionUI component as is
 export default function OrphionUI() {
   return (
-    <div className="h-screen w-screen font-serif">
+    <div className="flex flex-col min-h-screen">
       <style jsx global>{`
         input, textarea, button, div, span, p, h1, h2, h3, h4, h5, h6 {
           font-family: var(--font-merriweather), serif !important;
         }
       `}</style>
-      <OrphionUIContent />
+
+      <ClientOnly fallback={<div>Loading...</div>}>
+        <OrphionUIContent />
+      </ClientOnly>
     </div>
   )
 }
