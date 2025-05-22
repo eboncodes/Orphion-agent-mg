@@ -35,7 +35,7 @@ export default function TextGenerationLoader({
 
   return (
     <div className="flex items-center gap-3 text-neutral-300 animate-fadeIn">
-      <div className="circular-loader"></div>
+      <div className="loader-small"></div>
       <div className="flex">
         <span className="text-sm">{displayText}</span>
         <span className="w-6 inline-block text-sm">{dots}</span>

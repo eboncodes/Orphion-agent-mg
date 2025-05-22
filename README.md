@@ -22,28 +22,28 @@
 
 ### Clone the repository
 
-```bash
+\`\`\`bash
 git clone https://github.com/tejintelligence-platform/Orphion-Agent.git
 cd orphion-agent
-```
+\`\`\`
 
 ### Install dependencies
 
-```bash
+\`\`\`bash
 npm install --legacy-peer-deps
-```
+\`\`\`
 
 ### Build the app
 
-```bash
+\`\`\`bash
 npm run build
-```
+\`\`\`
 
 ### Start the development server
 
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 Open your browser and navigate to `http://localhost:3000`
 
@@ -81,4 +81,3 @@ For questions, suggestions, or support:
 ---
 
 ## 🧠 Developed by [TEJ intelligence](https://tejintelligence.com)
-

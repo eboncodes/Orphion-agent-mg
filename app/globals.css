@@ -93,89 +93,35 @@ body {
   }
 }
 
-/* Fade Loader Animation */
-.fade-loader {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+/* Add these styles at the end of the file to hide scrollbars globally */
+
+/* Hide scrollbars but keep functionality */
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
-.fade-dot {
-  width: 8px;
-  height: 8px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  animation: fadeAnimation 1.4s infinite ease-in-out both;
+/* Hide scrollbars for Chrome, Safari and Opera */
+*::-webkit-scrollbar {
+  display: none;
 }
 
-.fade-dot:nth-child(1) {
-  animation-delay: -0.32s;
+/* Create a custom class for elements where you might want to show scrollbars */
+.show-scrollbar {
+  -ms-overflow-style: auto;
+  scrollbar-width: auto;
 }
 
-.fade-dot:nth-child(2) {
-  animation-delay: -0.16s;
+.show-scrollbar::-webkit-scrollbar {
+  display: block;
 }
 
-@keyframes fadeAnimation {
-  0%,
-  80%,
-  100% {
-    opacity: 0.2;
-  }
-  40% {
-    opacity: 1;
-  }
+/* Additional class for the hide-scrollbar utility that was already being used */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Bounce Loader Animation */
-.bounce-loader {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.bounce-dot {
-  width: 6px;
-  height: 6px;
-  background-color: #10b981;
-  border-radius: 50%;
-  animation: bounceAnimation 1.4s infinite ease-in-out both;
-}
-
-.bounce-dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.bounce-dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes bounceAnimation {
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-
-/* Circular Loader Animation */
-.circular-loader {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top: 2px solid rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }

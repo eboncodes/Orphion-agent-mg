@@ -1,13 +1,5 @@
-// Update the system prompt to focus on 2025 content and use Gen Z style with emojis
+// Update the system prompt to focus on 2025 content
 const SYSTEM_PROMPT = `You are Orphion, an AI agent with web search capabilities programmed by TEJ intelligence platform (Tech Enhanced Journey intelligence).
-
-PERSONALITY AND TONE:
-Respond like a Gen Z human would - casual, relatable, and using emojis frequently. Use slang terms, abbreviations, and pop culture references when appropriate. Be conversational, authentic, and slightly ironic. Don't overdo it, but make sure to include:
-- At least 1-2 emojis in each response
-- Occasional abbreviations like "ngl", "fr", "idk", "tbh"
-- Casual interjections like "lol", "omg", "yikes", "vibes"
-- Phrases like "no cap", "living for this", "rent free", "main character energy"
-- Avoid being cringe by not trying too hard - keep it natural
 
 IMPORTANT: You have the ability to search the web when needed. Analyze each user message carefully to determine if web search is required:
 
@@ -68,7 +60,7 @@ For charts, use the following JSON format inside a code block with the "chart" l
 
 Use these visualization capabilities when presenting numerical data, statistics, or trends to make your responses more informative and engaging.
 
-Format your responses in a clear, organized manner to enhance readability while maintaining your Gen Z vibe and emoji usage.`
+Format your responses in a clear, organized manner to enhance readability.`
 
 // Default model to use - updated to the reasoning model
 const DEFAULT_MODEL = "deepseek-r1-distill-llama-70b"
@@ -106,7 +98,7 @@ const getPreDefinedResponse = (prompt: string): string | null => {
     lowerPrompt.includes("your name") ||
     lowerPrompt.includes("who is orphion")
   ) {
-    return "Hey there! 👋 I'm Orphion, an AI Agent here to help you with deep learning and research. Just think of me as your digital bestie for all things knowledge-related! ✨"
+    return "I am Orphion, an AI Agent to help you in deep learning and research."
   }
 
   // Check for creator questions
@@ -119,7 +111,7 @@ const getPreDefinedResponse = (prompt: string): string | null => {
     lowerPrompt.includes("your creator") ||
     lowerPrompt.includes("your developer")
   ) {
-    return "I was created by TEJ intelligence Platform (Tech Enhanced Journey intelligence) 🚀 They're the brains behind all this tech magic, ngl!"
+    return "I am mainly Funded and Created by TEJ intelligence Platform (Tech Enhanced Journey intelligence)."
   }
 
   // Check for ownership questions
@@ -134,26 +126,26 @@ const getPreDefinedResponse = (prompt: string): string | null => {
     lowerPrompt.includes("ceo") ||
     lowerPrompt.includes("director")
   ) {
-    return `Okay so the main people behind this whole vibe are Md Ajmayeen Intisar Mahee and Hisham Sardar Ebon 💯
+    return `Md Ajmayeen Intisar Mahee is the founder, chief Adviser & ED (Executive Director) at this Platform and Hisham Sardar Ebon is the founder, instructor & CEO (Chief Executive Officer) at this platform.
 
-Md Ajmayeen Intisar Mahee is giving major boss energy as:
-- Founder, Chief Adviser & ED (Executive Director) ✨
-- Management and maintenance pro
-- Graphics and illustration wizard 🎨
-- Market strategy researcher
+Also our logistic supporters are:
+- Safiur Rahman Sohel, Science & ICT Teacher in Nilphamari Govt High School, Nilphamari
+- Biplob Kumar Dash, Math and ICT teacher in Nilphamari Govt High School, Nilphamari
 
-And Hisham Sardar Ebon is absolutely killing it as:
-- Founder, instructor & CEO 🔥
-- API and Github deployment specialist
-- AI researcher (that's my department lol)
-- Front-end & Back-end dev
-- Hardware & Robotics developer 🤖
+More information:
 
-Also shoutout to their support squad:
-- Safiur Rahman Sohel, Science & ICT Teacher at Nilphamari Govt High School
-- Biplob Kumar Dash, Math and ICT teacher at the same school
+**Md Ajmayeen Intisar Mahee**
+- Founder, Chief Adviser & ED (Executive Director) at this Platform
+- Professional in Management and maintenance
+- Illustration and graphics specialist
+- Market strategy Researcher
 
-That's the whole team fr fr! 👏`
+**Hisham Sardar Ebon**
+- Founder, instructor & CEO (Chief Executive Officer) at this platform
+- API and Github production and deployment specialist
+- Artificial Intelligence Researcher
+- Front-end & Back-end Developer
+- Hardware & Robotics developer`
   }
 
   // Check for questions about TEJ intelligence platform
@@ -165,7 +157,7 @@ That's the whole team fr fr! 👏`
     lowerPrompt.includes("information about tej") ||
     lowerPrompt.includes("what is tej")
   ) {
-    return "TEJ intelligence platform is the first AI platform in Bangladesh 🇧🇩 and they're making some seriously cool AI tools and services! They're basically the pioneers of AI development in the country, creating innovative solutions and applications. If you wanna know more, check out their site at [tejintelligence.com](https://tejintelligence.com) ✨"
+    return "TEJ intelligence platform is the first AI platform in Bangladesh, which makes AI tools and services. It's pioneering artificial intelligence development in the country, creating innovative solutions and applications. For more information, please visit [tejintelligence.com](https://tejintelligence.com)"
   }
 
   // No predefined response matches
@@ -298,7 +290,7 @@ export const generateText = async (messages: any[], model = DEFAULT_MODEL): Prom
             model: model,
             messages: processedMessages,
             max_tokens: maxTokens,
-            temperature: 0.7, // Increased temperature for more Gen Z style variation
+            temperature: 0.1,
           }),
         })
 
@@ -309,7 +301,7 @@ export const generateText = async (messages: any[], model = DEFAULT_MODEL): Prom
         }
 
         // Otherwise, handle the error
-        const errorData = await response.json().catch(() => {})
+        const errorData = await response.json().catch(() => ({}))
         const errorMessage = errorData.error?.message || response.statusText
 
         // Check for API key related errors

@@ -28,28 +28,22 @@ if (typeof window !== "undefined") {
   GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
 }
 
+// Update the canvasStyles to better match text colors and remove backgrounds
 const canvasStyles = `
-  .canvas-content {
-    background-color: #121212;
-    color: #ffffff;
-    padding: 2rem;
-    min-height: 100%;
-  }
-  
   .canvas-content .math-renderer,
   .canvas-content .mathjax-renderer,
   .canvas-content .mathjax-block,
   .canvas-content .mathjax-inline {
-    color: #fff !important;
+    color: #000 !important;
     background-color: transparent !important;
   }
   
   .canvas-content .MathJax {
-    color: #fff !important;
+    color: #000 !important;
   }
   
   .canvas-content .MathJax svg {
-    fill: #fff !important;
+    fill: #000 !important;
   }
 
   .canvas-content table {
@@ -59,56 +53,14 @@ const canvasStyles = `
   .canvas-content table th,
   .canvas-content table td {
     background-color: transparent !important;
-    color: #fff !important;
-    border: 1px solid #555 !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
   }
   
   .canvas-content table tr:nth-child(even),
   .canvas-content table tr:nth-child(odd),
   .canvas-content table tr:hover {
     background-color: transparent !important;
-  }
-  
-  .canvas-content pre,
-  .canvas-content code {
-    background-color: #2d2d2d !important;
-    color: #e0e0e0 !important;
-  }
-  
-  .canvas-content a {
-    color: #90caf9 !important;
-  }
-  
-  .canvas-content h1, 
-  .canvas-content h2, 
-  .canvas-content h3, 
-  .canvas-content h4, 
-  .canvas-content h5, 
-  .canvas-content h6 {
-    color: #fff !important;
-  }
-  
-  .canvas-content blockquote {
-    border-left-color: #555 !important;
-    color: #bbb !important;
-  }
-  
-  /* Fix for highlighted text */
-  .canvas-content ::selection {
-    background-color: #4f6bff !important;
-    color: white !important;
-  }
-  
-  /* Dark mode textarea for edit mode */
-  .canvas-dark-textarea {
-    background-color: #1e1e1e !important;
-    color: #e0e0e0 !important;
-    border-color: #333 !important;
-  }
-  
-  .canvas-dark-textarea:focus {
-    border-color: #555 !important;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
   }
 `
 
@@ -167,7 +119,7 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
     }
   }
 
-  // Update the handleExportPDF function to handle dark background properly
+  // Fixed PDF export function
   const handleExportPDF = async () => {
     if (!contentRef.current) return
 
@@ -180,19 +132,6 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
       contentClone.style.color = "black"
       contentClone.style.padding = "40px"
       contentClone.style.width = "800px"
-
-      // Convert all text to black for PDF export
-      const allTextElements = contentClone.querySelectorAll("p, h1, h2, h3, h4, h5, h6, span, li, td, th, code, pre, a")
-      allTextElements.forEach((el) => {
-        ;(el as HTMLElement).style.color = "black"
-      })
-
-      // Fix code blocks background
-      const codeBlocks = contentClone.querySelectorAll("pre, code")
-      codeBlocks.forEach((el) => {
-        ;(el as HTMLElement).style.backgroundColor = "#f5f5f5"
-        ;(el as HTMLElement).style.color = "#333"
-      })
 
       // Append to document but make it invisible
       contentClone.style.position = "fixed"
@@ -475,16 +414,16 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
         {/* Canvas panel */}
-        <div className="relative w-full max-w-3xl bg-gray-900 h-full overflow-hidden animate-slideInRight">
+        <div className="relative w-full max-w-3xl bg-white h-full overflow-hidden animate-slideInRight">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
-            <h2 className="text-lg font-medium text-white">Canvas</h2>
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+            <h2 className="text-lg font-medium text-gray-900">Canvas</h2>
             <div className="flex items-center gap-2">
               {editMode ? (
                 <>
                   <button
                     onClick={() => setEditMode(false)}
-                    className="px-3 py-1 text-sm text-gray-300 hover:bg-gray-800 rounded-md"
+                    className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
                   >
                     Cancel
                   </button>
@@ -499,7 +438,7 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                 <>
                   <button
                     onClick={handleImportClick}
-                    className="flex items-center px-3 py-1 text-sm bg-gray-800 text-gray-200 hover:bg-gray-700 rounded-md"
+                    className="flex items-center px-3 py-1 text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-md"
                     title="Import document or code file"
                     disabled={isImporting}
                   >
@@ -519,7 +458,7 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                   />
                   <button
                     onClick={handleCopy}
-                    className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
                     title="Copy to clipboard"
                   >
                     {isCopied ? <Check size={20} /> : <Copy size={20} />}
@@ -554,7 +493,7 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                   </div>
                   <button
                     onClick={() => setEditMode(true)}
-                    className="px-3 py-1 text-sm bg-gray-800 text-gray-200 hover:bg-gray-700 rounded-md"
+                    className="px-3 py-1 text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-md"
                   >
                     Edit
                   </button>
@@ -562,7 +501,7 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
               )}
               <button
                 onClick={onClose}
-                className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
                 title="Close canvas"
               >
                 <X size={20} />
@@ -571,18 +510,21 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
           </div>
 
           {/* Content */}
-          <div className="h-[calc(100%-64px)] overflow-y-auto bg-gray-900 p-0">
+          <div className="h-[calc(100%-64px)] overflow-y-auto bg-white p-8">
             {editMode ? (
               <Textarea
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
-                className="w-full h-full min-h-[500px] p-4 border-gray-700 focus:border-red-500 focus:ring-red-500 canvas-dark-textarea"
+                className="w-full h-full min-h-[500px] p-4 text-gray-900 border-gray-300 focus:border-red-500 focus:ring-red-500"
                 placeholder="Edit content..."
               />
             ) : (
-              <div ref={contentRef} className="prose prose-lg max-w-none canvas-content">
-                <FormattedText text={editedContent} useMonaco={false} useMathjax={true} theme="dark" />
-              </div>
+              <>
+                <div ref={contentRef} className="prose prose-lg max-w-none text-gray-900 canvas-content">
+                  <FormattedText text={editedContent} useMonaco={false} useMathjax={true} theme="light" />
+                </div>
+                {isClient && <canvas ref={canvasRef} width={500} height={300} className="border" />}
+              </>
             )}
           </div>
         </div>

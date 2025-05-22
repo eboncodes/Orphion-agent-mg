@@ -17,11 +17,6 @@ export default function SearchProgress({ queries, completedQueries }: SearchProg
 
         return (
           <div key={index} className="flex items-center text-sm text-neutral-400">
-            <div className="bounce-loader mr-2">
-              <div className="bounce-dot"></div>
-              <div className="bounce-dot"></div>
-              <div className="bounce-dot"></div>
-            </div>
             <span>Searching the web about "{query}"</span>
           </div>
         )
