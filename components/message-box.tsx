@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { ArrowUp, ChevronDown, Globe, Paperclip, Sparkles, Pyramid, X } from "lucide-react"
+import { ArrowUp, ChevronDown, Globe, Paperclip, Sparkles, Menu, Pyramid, X } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import Image from "next/image"
 import OrphionChat from "./orphion-chat"
@@ -83,9 +83,9 @@ export default function MessageBox({
   const getModeIcon = (mode: string) => {
     switch (mode) {
       case "Deep Search":
-        return <Pyramid size={16} className="mr-1" />
+        return <Pyramid size={16} className="mr-2" />
       default:
-        return <Sparkles size={16} className="mr-1" />
+        return <Sparkles size={16} className="mr-2" />
     }
   }
 
@@ -158,15 +158,13 @@ export default function MessageBox({
   // Update the useEffect for auto-resizing the textarea
   useEffect(() => {
     if (inputRef.current) {
-      // Reset to default height first
-      inputRef.current.style.height = "24px"
-
       if (inputValue === "") {
-        // If input is empty, keep at minimum height
-        inputRef.current.style.height = "24px"
+        // If input is empty, reset to minimum height
+        inputRef.current.style.height = "40px"
       } else {
-        // Otherwise, adjust height based on content, but cap it
-        const scrollHeight = Math.min(inputRef.current.scrollHeight, 48)
+        // Otherwise, adjust height based on content
+        inputRef.current.style.height = "40px"
+        const scrollHeight = Math.min(inputRef.current.scrollHeight, 72)
         inputRef.current.style.height = `${scrollHeight}px`
       }
     }
@@ -232,14 +230,14 @@ export default function MessageBox({
     setIsPendingCreation(true)
     setInputValue("")
 
-    // Reset textarea height after sending
-    if (inputRef.current) {
-      inputRef.current.style.height = "24px"
-    }
-
     // Make sure we explicitly mark that this message has an attached image
     if (attachedImage) {
       console.log("Setting initial message with attached image")
+    }
+
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = "40px"
     }
 
     // Add a small delay for the transition animation
@@ -333,6 +331,16 @@ export default function MessageBox({
           isTransitioning ? "opacity-0" : chatStarted ? "hidden" : "opacity-100"
         }`}
       >
+        {/* Mobile menu button - only visible on mobile */}
+        {isMobile && !chatStarted && (
+          <button
+            className="absolute top-3 left-3 p-2 rounded-md bg-neutral-800/50 text-white"
+            onClick={onSidebarToggle}
+          >
+            <Menu size={20} />
+          </button>
+        )}
+
         {/* Logo */}
         <div className="mb-4 animate-fadeIn">
           <Image src="/images/orphion-logo.png" alt="Orphion Logo" width={60} height={60} className="h-16 w-auto" />
@@ -346,119 +354,139 @@ export default function MessageBox({
           How can I help you?
         </p>
 
-        {/* Chat Input - Compact version matching screenshot */}
+        {/* Chat Input */}
         <div className={`w-full ${isMobile ? "px-4" : "max-w-lg"} animate-fadeIn`} style={{ animationDelay: "200ms" }}>
-          <div className="bg-[#0a0a0a] rounded-xl border border-neutral-800">
-            <div className="px-4 py-3">
+          <div className="bg-[#0a0a0a] rounded-2xl p-3 border border-neutral-900">
+            <div className="mb-3">
               <Textarea
                 ref={inputRef}
-                className="w-full bg-transparent border-none text-sm placeholder:text-neutral-500 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 min-h-[24px] max-h-[48px] overflow-hidden"
-                placeholder="Ask Anything..."
+                className={`w-full bg-transparent border-none text-base placeholder:text-neutral-500 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none textarea-3-lines modern-scrollbar font-serif ${
+                  chatStarted || isTransitioning || isStartingChat ? "opacity-50" : ""
+                }`}
+                placeholder={
+                  isStartingChat
+                    ? "Starting chat..."
+                    : attachedImage
+                      ? "Describe the image or ask a question about it..."
+                      : "Ask Anything..."
+                }
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={handleInputFocus}
                 autoFocus
                 disabled={chatStarted || isTransitioning || isStartingChat}
+                style={{ fontFamily: "var(--font-merriweather), serif" }}
               />
             </div>
 
-            <div className="flex items-center justify-between px-3 py-2 border-t border-neutral-800">
-              {/* Left side - Mode selector */}
-              <div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild disabled={chatStarted || isTransitioning || isStartingChat}>
-                    <button
-                      className={`flex items-center text-xs bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 rounded-full ${
-                        chatStarted || isTransitioning || isStartingChat ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="relative flex items-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      asChild
+                      disabled={chatStarted || isTransitioning || isStartingChat || !!attachedImage}
                     >
-                      {getModeIcon(selectedMode)}
-                      <span>{selectedMode}</span>
-                      <ChevronDown size={12} className="ml-1" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-[#1a1a1a] border-neutral-800 text-white">
-                    <DropdownMenuItem
-                      className="hover:bg-red-800 focus:bg-red-800 cursor-pointer flex items-center text-white"
-                      onClick={() => handleModeSelect("General")}
-                    >
-                      <Sparkles size={14} className="mr-2" />
-                      General
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="hover:bg-red-800 focus:bg-red-800 cursor-pointer flex items-center text-white"
-                      onClick={() => handleModeSelect("Deep Search")}
-                    >
-                      <Pyramid size={14} className="mr-2" />
-                      Deep Search
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <div
+                        className={`flex items-center border border-neutral-600 rounded-full px-2 py-1 hover:bg-neutral-800/50 transition-colors cursor-pointer bg-neutral-800/30 ${
+                          chatStarted || isTransitioning || isStartingChat || !!attachedImage
+                            ? "opacity-50 cursor-not-allowed pointer-events-none"
+                            : ""
+                        }`}
+                      >
+                        {getModeIcon(selectedMode)}
+                        {!isMobile && <span className="text-xs text-white">{selectedMode}</span>}
+                        <ChevronDown size={14} className="ml-1 text-white" />
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-[#1a1a1a] border-neutral-800 text-white">
+                      <DropdownMenuItem
+                        className="hover:bg-red-800 focus:bg-red-800 cursor-pointer flex items-center text-white"
+                        onClick={() => handleModeSelect("General")}
+                      >
+                        <Sparkles size={16} className="mr-2" />
+                        General
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="hover:bg-red-800 focus:bg-red-800 cursor-pointer flex items-center text-white"
+                        onClick={() => handleModeSelect("Deep Search")}
+                      >
+                        <Pyramid size={16} className="mr-2" />
+                        Deep Search
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
 
-              {/* Right side - Action buttons */}
               <div className="flex items-center gap-2">
-                {/* Search option button */}
-                <button
-                  className={`flex items-center text-xs bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 rounded-full ${
-                    chatStarted || isTransitioning || isStartingChat ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  onClick={toggleWebSearchDropdown}
-                  disabled={chatStarted || isTransitioning || isStartingChat}
-                >
-                  <Globe size={14} className="mr-1" />
-                  <span>Search Option</span>
-                </button>
-
-                <WebSearchDropdown
-                  isOpen={showWebSearchDropdown && !chatStarted && !isTransitioning && !isStartingChat}
-                  onClose={() => setShowWebSearchDropdown(false)}
-                  showSources={localShowSearchSources}
-                  showImages={localShowSearchImages}
-                  onToggleSources={toggleSearchSources}
-                  onToggleImages={toggleSearchImages}
-                />
-
-                {/* Image attachment button */}
-                {attachedImage ? (
-                  <div className="relative">
-                    <img
-                      src={attachedImage || "/placeholder.svg"}
-                      alt="Attached"
-                      className="w-6 h-6 rounded object-cover"
-                    />
-                    <button
-                      onClick={() => setAttachedImage(null)}
-                      className="absolute -top-1 -right-1 bg-neutral-800 text-white rounded-full p-0.5"
-                      aria-label="Remove image"
-                    >
-                      <X size={10} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    className={`text-neutral-400 hover:text-white ${
-                      chatStarted || isTransitioning || isStartingChat ? "opacity-50 cursor-not-allowed" : ""
+                {/* Web search button - more compact on mobile */}
+                <div className="relative flex items-center">
+                  <div
+                    className={`flex items-center border border-neutral-600 rounded-full px-2 py-1 hover:bg-neutral-800/50 transition-colors cursor-pointer bg-neutral-800/30 ${
+                      chatStarted || isTransitioning || isStartingChat || !!attachedImage
+                        ? "opacity-50 cursor-not-allowed pointer-events-none"
+                        : ""
                     }`}
-                    onClick={handleAttachImage}
-                    disabled={chatStarted || isTransitioning || isStartingChat}
-                    aria-label="Attach image"
+                    onClick={toggleWebSearchDropdown}
                   >
-                    <Paperclip size={16} />
-                  </button>
-                )}
+                    <Globe size={18} className="text-white" />
+                    {!isMobile && <span className="ml-2 text-xs text-white">Search Option</span>}
+                  </div>
 
-                {/* Send button */}
+                  <WebSearchDropdown
+                    isOpen={
+                      showWebSearchDropdown && !chatStarted && !isTransitioning && !isStartingChat && !attachedImage
+                    }
+                    onClose={() => setShowWebSearchDropdown(false)}
+                    showSources={localShowSearchSources}
+                    showImages={localShowSearchImages}
+                    onToggleSources={toggleSearchSources}
+                    onToggleImages={toggleSearchImages}
+                  />
+                </div>
+
+                {/* Image attachment button (using the paperclip icon) */}
+                <div className="relative">
+                  {attachedImage ? (
+                    <div className="relative group">
+                      <img
+                        src={attachedImage || "/placeholder.svg"}
+                        alt="Attached"
+                        className="w-[30px] h-[30px] rounded-md object-cover border border-neutral-700"
+                      />
+                      <button
+                        onClick={() => setAttachedImage(null)}
+                        className="absolute -top-2 -right-2 bg-neutral-800 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Remove image"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className={`text-neutral-400 hover:text-white transition-colors ${
+                        chatStarted || isTransitioning || isStartingChat ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                      onClick={handleAttachImage}
+                      disabled={chatStarted || isTransitioning || isStartingChat}
+                      aria-label="Attach image"
+                      title="Attach image"
+                    >
+                      <Paperclip size={18} className="translate-y-0.5" />
+                    </button>
+                  )}
+                </div>
+
                 <button
-                  className={`flex items-center justify-center p-1.5 rounded-full ${
+                  className={`bg-red-700 hover:bg-red-600 p-1.5 rounded-full transition-colors ${
                     (!inputValue.trim() && !attachedImage) || isTyping || chatStarted || isStartingChat
-                      ? "bg-neutral-700 opacity-50 cursor-not-allowed"
-                      : "bg-red-700 hover:bg-red-600"
+                      ? "opacity-50 cursor-not-allowed bg-neutral-700"
+                      : ""
                   }`}
                   onClick={handleStartChat}
                   disabled={(!inputValue.trim() && !attachedImage) || isTyping || chatStarted || isStartingChat}
-                  aria-label="Send message"
                 >
                   <ArrowUp size={14} />
                 </button>
@@ -486,7 +514,7 @@ export default function MessageBox({
             isPendingCreation={isPendingCreation}
             onChatCreated={handleChatCreated}
             selectedMode={selectedMode}
-            onSidebarToggle={null}
+            onSidebarToggle={onSidebarToggle}
             onChatUpdated={onChatUpdated}
             showSearchSources={localShowSearchSources}
             showSearchImages={localShowSearchImages}
