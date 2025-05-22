@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Archive, Search, Trash, Plus, Clock } from "lucide-react"
+import { Archive, Search, Trash, Plus, Clock, MessageSquare } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { type ChatSession, deleteSessionById, deleteAllSessions } from "./chat-storage-service"
 import DeleteConfirmation from "./delete-confirmation"
@@ -130,7 +130,10 @@ export default function ArchivesView({ savedChats, onChatSelect, onNewChat, onRe
                 className="flex flex-col p-4 bg-[#1a1a1a] rounded-lg border border-neutral-800 hover:border-neutral-700 cursor-pointer transition-colors"
               >
                 <div className="flex justify-between items-start">
-                  <h3 className="text-lg font-medium mb-1 truncate pr-6">{chat.title}</h3>
+                  <div className="flex items-center">
+                    <MessageSquare size={16} className="text-neutral-400 mr-2 flex-shrink-0" />
+                    <h3 className="text-lg font-medium mb-1 truncate pr-6">{chat.title}</h3>
+                  </div>
                   <button
                     onClick={(e) => handleDeleteChat(chat.id, e)}
                     className="text-neutral-500 hover:text-white transition-colors p-1"

@@ -225,43 +225,25 @@ body {
   display: none; /* Chrome, Safari and Opera */
 }
 
+/* Replace the Original Loader Animation - Smaller Size section with this new circular loader animation */
+
 /* Original Loader Animation - Smaller Size */
 .loader-small {
-  --s: 16px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
 
-  --_d: calc(0.353 * var(--s));
-  width: calc(var(--s) + var(--_d));
-  aspect-ratio: 1;
-  display: grid;
-}
-.loader-small:before,
-.loader-small:after {
-  content: "";
-  clip-path: polygon(var(--_d) 0, 100% 0, 100% calc(100% - var(--_d)), calc(100% - var(--_d)) 100%, 0 100%, 0 var(--_d));
-  background: conic-gradient(from -90deg at var(--s) var(--_d), #fff 135deg, #666 0 270deg, #aaa 0);
-  animation: l4 1.2s infinite;
-}
-.loader-small:before {
-  z-index: 1;
-  margin-bottom: calc(var(--_d) / -2 - 1px);
-}
-.loader-small:after {
-  margin-top: calc(var(--_d) / -2 - 1px);
-  animation-delay: 0.6s;
-}
-@keyframes l4 {
+@keyframes spin {
   0% {
-    transform: translate(0);
+    transform: rotate(0deg);
   }
-  16.67% {
-    transform: translate(-6px);
-  }
-  33.33% {
-    transform: translate(6px);
-  }
-  50%,
   100% {
-    transform: translate(0);
+    transform: rotate(360deg);
   }
 }
 
