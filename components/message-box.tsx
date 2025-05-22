@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { ArrowUp, ChevronDown, Globe, Paperclip, Sparkles, Menu, Pyramid, X } from "lucide-react"
+import { ArrowUp, ChevronDown, Globe, Paperclip, Sparkles, Menu, Pyramid, X, Mic, MicOff } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import Image from "next/image"
 import OrphionChat from "./orphion-chat"
@@ -69,6 +69,67 @@ export default function MessageBox({
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [greeting, setGreeting] = useState(getTimeBasedGreeting())
+  const [isListening, setIsListening] = useState(false)
+  const [recognitionSupported, setRecognitionSupported] = useState(false)
+  const recognitionRef = useRef<any>(null)
+
+  // Check if speech recognition is supported
+  useEffect(() => {
+    const isSupported = "SpeechRecognition" in window || "webkitSpeechRecognition" in window
+    setRecognitionSupported(isSupported)
+  }, [])
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (recognitionSupported) {
+      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition
+      recognitionRef.current = new SpeechRecognition()
+      recognitionRef.current.lang = "bn-BD" // Set language to Bangla
+      recognitionRef.current.interimResults = false
+      recognitionRef.current.continuous = false
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript
+        setInputValue((prev) => prev + transcript)
+      }
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false)
+      }
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error)
+        setIsListening(false)
+      }
+
+      return () => {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop()
+        }
+      }
+    }
+  }, [recognitionSupported])
+
+  // Toggle speech recognition
+  const toggleSpeechRecognition = () => {
+    if (!recognitionSupported) {
+      alert("Speech recognition is not supported in your browser")
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    } else {
+      try {
+        recognitionRef.current.start()
+        setIsListening(true)
+      } catch (error) {
+        console.error("Failed to start speech recognition:", error)
+        setIsListening(false)
+      }
+    }
+  }
 
   // Update greeting every minute
   useEffect(() => {
@@ -357,27 +418,34 @@ export default function MessageBox({
         {/* Chat Input */}
         <div className={`w-full ${isMobile ? "px-4" : "max-w-lg"} animate-fadeIn`} style={{ animationDelay: "200ms" }}>
           <div className="bg-[#0a0a0a] rounded-2xl p-3 border border-neutral-900">
-            <div className="mb-3">
+            <div className="mb-3 relative">
               <Textarea
                 ref={inputRef}
                 className={`w-full bg-transparent border-none text-base placeholder:text-neutral-500 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none textarea-3-lines modern-scrollbar font-serif ${
                   chatStarted || isTransitioning || isStartingChat ? "opacity-50" : ""
-                }`}
+                } ${isListening ? "border-red-500 border-2" : ""}`}
                 placeholder={
                   isStartingChat
                     ? "Starting chat..."
-                    : attachedImage
-                      ? "Describe the image or ask a question about it..."
-                      : "Ask Anything..."
+                    : isListening
+                      ? "বাংলায় বলুন... (Speak in Bangla...)"
+                      : attachedImage
+                        ? "Describe the image or ask a question about it..."
+                        : "Ask Anything..."
                 }
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={handleInputFocus}
                 autoFocus
-                disabled={chatStarted || isTransitioning || isStartingChat}
+                disabled={chatStarted || isTransitioning || isStartingChat || isListening}
                 style={{ fontFamily: "var(--font-merriweather), serif" }}
               />
+              {isListening && (
+                <div className="absolute right-3 top-3 animate-pulse">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
@@ -446,6 +514,21 @@ export default function MessageBox({
                     onToggleImages={toggleSearchImages}
                   />
                 </div>
+
+                {/* Microphone button for voice input */}
+                {recognitionSupported && (
+                  <button
+                    className={`text-neutral-400 hover:text-white transition-colors ${
+                      chatStarted || isTransitioning || isStartingChat ? "opacity-50 cursor-not-allowed" : ""
+                    } ${isListening ? "text-red-500" : ""}`}
+                    onClick={toggleSpeechRecognition}
+                    disabled={chatStarted || isTransitioning || isStartingChat}
+                    aria-label={isListening ? "Stop listening" : "Start voice input (Bangla)"}
+                    title={isListening ? "Stop listening" : "Start voice input (Bangla)"}
+                  >
+                    {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                  </button>
+                )}
 
                 {/* Image attachment button (using the paperclip icon) */}
                 <div className="relative">
