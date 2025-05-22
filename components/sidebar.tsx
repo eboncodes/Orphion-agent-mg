@@ -208,7 +208,7 @@ export default function Sidebar({
       {/* Mobile menu button - only visible on mobile when sidebar is closed */}
       {isMobile && !isOpen && (
         <button
-          className="fixed top-3 left-3 z-50 p-2 rounded-md bg-neutral-800 text-white hover:bg-neutral-700 transition-colors"
+          className="fixed top-3 left-3 z-40 p-2 rounded-md bg-neutral-800 text-white hover:bg-neutral-700 transition-colors"
           onClick={toggleSidebar}
         >
           <Menu size={20} />

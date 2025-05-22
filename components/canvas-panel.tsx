@@ -485,12 +485,17 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
     }
   }
 
+  // Stop propagation to prevent sidebar from opening
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+  }
+
   if (!isOpen) return null
 
   return (
     <>
       {isOpen && <style dangerouslySetInnerHTML={{ __html: canvasStyles }} />}
-      <div className="fixed inset-0 z-[100] flex justify-end">
+      <div className="fixed inset-0 z-[999] flex justify-end" onClick={handleCanvasClick}>
         {/* Backdrop */}
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
