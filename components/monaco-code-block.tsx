@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, Copy, Download } from "lucide-react"
+import { Check, Copy, Download, PlayCircle, X } from "lucide-react"
 import { getLanguageName } from "@/utils/code-utils"
 import { cn } from "@/lib/utils"
 import dynamic from "next/dynamic"
@@ -44,6 +44,7 @@ export default function MonacoCodeBlock({
 
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   // Make sure we don't lose any updates to children
   const [code, setCode] = useState(contentToDisplay)
@@ -158,11 +159,34 @@ export default function MonacoCodeBlock({
     return languageMap[lang.toLowerCase()] || lang.toLowerCase()
   }
 
+  // Check if code is runnable in browser
+  const isRunnableCode = (): boolean => {
+    const normalizedLang = getMonacoLanguage(language).toLowerCase()
+    return ["html", "javascript", "jsx", "tsx", "css"].includes(normalizedLang)
+  }
+
+  const handleRunCode = () => {
+    setPreviewOpen(true)
+  }
+
+  // Debug log to check if button should be visible
+  console.log(`Language: ${language}, Normalized: ${getMonacoLanguage(language)}, Runnable: ${isRunnableCode()}`)
+
   return (
     <div className={cn("my-4 relative", className)}>
       <div className="code-header flex justify-between items-center">
         <span className="text-xs text-neutral-400 font-mono">{title || getLanguageName(language)}</span>
         <div className="flex items-center gap-2">
+          {isRunnableCode() && (
+            <button
+              onClick={handleRunCode}
+              className="text-neutral-400 hover:text-green-500 transition-colors"
+              aria-label="Run code"
+              title="Run code"
+            >
+              <PlayCircle size={18} className="text-green-500" />
+            </button>
+          )}
           <button
             onClick={handleDownload}
             className="text-neutral-400 hover:text-white transition-colors"
@@ -205,7 +229,7 @@ export default function MonacoCodeBlock({
             folding: true,
             fontSize: 14,
             fontFamily:
-              "var(--font-geist-mono), 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
+              "var(--font-geist-sans), var(--font-geist-mono), 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
             fontLigatures: true,
             tabSize: 2,
             automaticLayout: true,
@@ -230,6 +254,52 @@ export default function MonacoCodeBlock({
           className="monaco-editor-container"
         />
       </div>
+      {previewOpen && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 font-geist">
+          <div className="bg-neutral-900 rounded-lg w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center p-3 border-b border-neutral-800">
+              <h3 className="text-sm font-medium font-geist">Code Preview</h3>
+              <button
+                onClick={() => setPreviewOpen(false)}
+                className="text-neutral-400 hover:text-white transition-colors"
+                aria-label="Close preview"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto bg-white p-0">
+              <iframe
+                srcDoc={
+                  getMonacoLanguage(language) === "html"
+                    ? code
+                    : `<!DOCTYPE html>
+                      <html>
+                        <head>
+                          <meta charset="UTF-8">
+                          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                          <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Geist+Sans:wght@300;400;500;600;700&display=swap');
+                            body {
+                              font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
+                              padding: 20px;
+                              line-height: 1.5;
+                            }
+                            ${getMonacoLanguage(language) === "css" ? code : ""}
+                          </style>
+                        </head>
+                        <body>
+                          ${getMonacoLanguage(language) !== "css" ? code : "<div>CSS applied to this page</div>"}
+                        </body>
+                      </html>`
+                }
+                className="w-full h-full border-0"
+                title="Code Preview"
+                sandbox="allow-scripts"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

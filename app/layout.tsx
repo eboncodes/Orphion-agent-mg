@@ -1,25 +1,33 @@
 import type React from "react"
 import "./globals.css"
-import { Merriweather } from "next/font/google"
+import { Inter_Tight } from "next/font/google"
+import type { Metadata } from "next"
+import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/context/auth-context"
 
-const merriweather = Merriweather({
-  weight: ["300", "400", "700", "900"],
+const interTight = Inter_Tight({
   subsets: ["latin"],
-  variable: "--font-merriweather",
+  display: "swap",
+  variable: "--font-inter-tight",
 })
 
-export const metadata = {
-  title: "Orphion AI",
-  description: "A powerful AI assistant",
+export const metadata: Metadata = {
+  title: "Orphion UI",
+  description: "A modern UI for Orphion",
     generator: 'v0.dev'
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
-    <html lang="en">
-      <body className={merriweather.className}>
-        <AuthProvider>{children}</AuthProvider>
+    <html lang="en" className={`${interTight.variable}`} suppressHydrationWarning>
+      <body className="font-inter-tight">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

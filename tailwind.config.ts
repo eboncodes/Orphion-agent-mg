@@ -18,6 +18,10 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        "inter-tight": ["var(--font-inter-tight)", "system-ui", "sans-serif"],
+        "geist-mono": ["monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
