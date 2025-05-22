@@ -14,7 +14,7 @@ interface TypingAnimationProps {
 export default function TypingAnimation({
   text,
   onComplete,
-  typingSpeed = 1, // Much faster default speed
+  typingSpeed = 10, // Slower default speed for more visible typing effect
   isComplete = false,
 }: TypingAnimationProps) {
   const [displayedText, setDisplayedText] = useState("")
@@ -34,15 +34,14 @@ export default function TypingAnimation({
     }
 
     if (currentIndex < text.length) {
-      // Calculate how many characters to add per tick
-      // This creates a more natural streaming effect with variable speeds
-      const charsToAdd = Math.max(1, Math.floor(text.length / 100) + 1)
+      // Add a variable typing speed to make it feel more natural
+      // Characters are added one at a time with variable delays
+      const randomDelay = Math.max(5, Math.floor(Math.random() * typingSpeed * 2))
 
       const timeout = setTimeout(() => {
-        const nextIndex = Math.min(currentIndex + charsToAdd, text.length)
-        setDisplayedText(text.substring(0, nextIndex))
-        setCurrentIndex(nextIndex)
-      }, typingSpeed)
+        setDisplayedText(text.substring(0, currentIndex + 1))
+        setCurrentIndex(currentIndex + 1)
+      }, randomDelay)
 
       return () => clearTimeout(timeout)
     } else if (!isFinished) {
@@ -63,7 +62,7 @@ export default function TypingAnimation({
       {!isFinished ? (
         <span className="inline-block">
           {displayedText}
-          <span className="typing-cursor">|</span>
+          <span className="typing-cursor animate-blink">|</span>
         </span>
       ) : (
         <FormattedText text={text} />

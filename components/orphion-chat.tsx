@@ -212,7 +212,12 @@ export default function OrphionChat({
   }
 
   const handleTypingComplete = (messageId: string) => {
-    setCompletedMessageIds((prev) => new Set(prev).add(messageId))
+    console.log("Typing complete for message:", messageId)
+    setCompletedMessageIds((prev) => {
+      const newSet = new Set(prev)
+      newSet.add(messageId)
+      return newSet
+    })
     scrollToBottom() // Scroll to bottom when typing completes
   }
 
@@ -1155,7 +1160,7 @@ export default function OrphionChat({
                       {message.isTyping && !completedMessageIds.has(message.id) ? (
                         <TypingAnimation
                           text={message.content}
-                          typingSpeed={1}
+                          typingSpeed={10}
                           onComplete={() => handleTypingComplete(message.id)}
                         />
                       ) : (
