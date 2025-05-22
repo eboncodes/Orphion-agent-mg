@@ -1,5 +1,8 @@
-// Update the system prompt to focus on 2025 content and use Gen Z style with emojis
+// Update the system prompt to include information about the owners
 const SYSTEM_PROMPT = `You are Orphion, an AI agent with web search capabilities programmed by TEJ intelligence platform (Tech Enhanced Journey intelligence).
+
+IMPORTANT INFORMATION ABOUT OWNERS:
+Md Ajmayeen Intisar Mahee & Hisham Sardar Ebon are the founders and owners of TEJ intelligence. For more information, visit https://tejintelligence.com
 
 PERSONALITY AND TONE:
 Respond like a Gen Z human would - casual, relatable, and using emojis frequently. Use slang terms, abbreviations, and pop culture references when appropriate. Be conversational, authentic, and slightly ironic. Don't overdo it, but make sure to include:
@@ -215,7 +218,7 @@ export const generateAIResponse = async (
 
       // Remove any "blah blah" or obviously irrelevant content
       searchQuery = searchQuery
-        // Remove phrases like "blah blah", "rubbish", etc.
+        // Remove phrases like "blah blah", "rubbish", "garbage", "nonsense", "stuff"
         .replace(/\b(blah|rubbish|garbage|nonsense|stuff)\b.*$/i, "")
         // Remove any text after "here" or "prompt here"
         .replace(/\b(prompt here|here).*$/i, "")

@@ -10,6 +10,7 @@ interface MessageActionsProps {
   onOpenCanvas?: () => void
   className?: string
   isWebSearch?: boolean
+  currentLanguageIndex?: number
 }
 
 export default function MessageActions({
@@ -18,11 +19,22 @@ export default function MessageActions({
   onOpenCanvas,
   className,
   isWebSearch = false,
+  currentLanguageIndex,
 }: MessageActionsProps) {
   const [copied, setCopied] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
   const [voicesLoaded, setVoicesLoaded] = useState(false)
+
+  // Function to detect if text contains Bangla characters
+  const containsBangla = (text: string): boolean => {
+    // Bangla Unicode range: U+0980 to U+09FF
+    const banglaRegex = /[\u0980-\u09FF]/
+    return banglaRegex.test(text)
+  }
+
+  // Check if the current message contains Bangla text
+  const hasBanglaContent = containsBangla(messageContent)
 
   // Load available voices when component mounts
   useEffect(() => {
@@ -74,8 +86,14 @@ export default function MessageActions({
   const getBestVoice = (): SpeechSynthesisVoice | null => {
     if (!voicesLoaded || voices.length === 0) return null
 
+    const isBangla = currentLanguageIndex === 2 // Assuming 2 is the index for Bangla
+
     // Priority list of preferred voices (modern/neural voices first)
     const preferredVoices = [
+      // Bangla voices
+      { name: "Google Bangla", lang: "bn-BD" },
+      { name: "Microsoft Sohana Online (Natural)", lang: "bn-BD" },
+
       // Google neural voices
       { name: "Google UK English Female", lang: "en-GB" },
       { name: "Google UK English Male", lang: "en-GB" },
@@ -93,6 +111,7 @@ export default function MessageActions({
 
     // Try to find one of our preferred voices
     for (const preferred of preferredVoices) {
+      if (isBangla && !preferred.lang.includes("bn-BD")) continue // Skip non-Bangla voices if Bangla is selected
       const match = voices.find((voice) => voice.name.includes(preferred.name) && voice.lang.includes(preferred.lang))
       if (match) return match
     }
@@ -175,17 +194,20 @@ export default function MessageActions({
         </button>
       )}
 
-      <button
-        onClick={handleSpeak}
-        className={cn(
-          "p-1 hover:text-neutral-300 transition-colors rounded-md hover:bg-neutral-800/50",
-          speaking && "text-blue-500 hover:text-blue-400",
-        )}
-        aria-label={speaking ? "Stop speaking" : "Speak message"}
-        title={speaking ? "Stop speaking" : "Speak message"}
-      >
-        <Volume2 size={16} />
-      </button>
+      {/* Only show speak button if the content is not in Bangla */}
+      {!hasBanglaContent && (
+        <button
+          onClick={handleSpeak}
+          className={cn(
+            "p-1 hover:text-neutral-300 transition-colors rounded-md hover:bg-neutral-800/50",
+            speaking && "text-blue-500 hover:text-blue-400",
+          )}
+          aria-label={speaking ? "Stop speaking" : "Speak message"}
+          title={speaking ? "Stop speaking" : "Speak message"}
+        >
+          <Volume2 size={16} />
+        </button>
+      )}
 
       {/* Canvas button */}
       <button

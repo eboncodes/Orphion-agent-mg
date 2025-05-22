@@ -3,17 +3,16 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { ArrowUp, ChevronDown, Globe, Paperclip, Sparkles, Menu, Pyramid, X, Mic, MicOff } from "lucide-react"
+import { ArrowUp, Paperclip, Menu, X, Mic, Settings } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import Image from "next/image"
 import OrphionChat from "./orphion-chat"
 import type { ChatSession } from "./chat-storage-service"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useIsMobile } from "../hooks/use-mobile"
 import { getSavedSessions } from "./chat-storage-service"
-import WebSearchDropdown from "./web-search-dropdown"
 import { getMissingApiKeys } from "@/utils/api-keys"
 import ApiKeyWarning from "./api-key-warning"
+import SettingsPopup from "./settings-popup"
 
 interface MessageBoxProps {
   activeChat: ChatSession | null
@@ -27,18 +26,41 @@ interface MessageBoxProps {
 }
 
 // Function to get time-based greeting
-const getTimeBasedGreeting = (): string => {
+const getTimeBasedGreeting = (): { greeting: string; name: string } => {
   const hour = new Date().getHours()
 
-  if (hour >= 5 && hour < 12) {
-    return "Good Morning"
+  if (hour >= 5 && hour < 8) {
+    return { greeting: "Good Morning 🌅", name: "early bird" }
+  } else if (hour >= 8 && hour < 12) {
+    return { greeting: "Good Morning ☀️", name: "friend" }
   } else if (hour >= 12 && hour < 18) {
-    return "Good Afternoon"
+    return { greeting: "Good Afternoon 🌞", name: "explorer" }
   } else if (hour >= 18 && hour < 22) {
-    return "Good Evening"
+    return { greeting: "Good Evening 🌇", name: "stargazer" }
   } else {
-    return "Good Night"
+    return { greeting: "Easy Night 🌙", name: "night owl" }
   }
+}
+
+// Available speech recognition languages
+type SpeechLanguage = {
+  code: string
+  name: string
+  placeholder: string
+}
+
+const SPEECH_LANGUAGES: SpeechLanguage[] = [
+  { code: "en-US", name: "English", placeholder: "Speak in English..." },
+  { code: "bn-BD", name: "Bangla", placeholder: "বাংলায় বলুন... (Speak in Bangla...)" },
+]
+
+// Function to detect language from text
+const detectLanguage = (text: string): number => {
+  // Simple detection based on first few characters
+  // Bangla Unicode range: \u0980-\u09FF
+  const firstChar = text.trim()[0] || ""
+  const isBangla = /[\u0980-\u09FF]/.test(firstChar)
+  return isBangla ? 1 : 0 // 1 for Bangla, 0 for English
 }
 
 export default function MessageBox({
@@ -62,16 +84,22 @@ export default function MessageBox({
   const [selectedMode, setSelectedMode] = useState("General")
   const isMobile = useIsMobile()
   const [isStartingChat, setIsStartingChat] = useState(false)
-  const [showWebSearchDropdown, setShowWebSearchDropdown] = useState(false)
   const [localShowSearchSources, setLocalShowSearchSources] = useState(showSearchSources)
   const [localShowSearchImages, setLocalShowSearchImages] = useState(showSearchImages)
   const [showApiKeyWarning, setShowApiKeyWarning] = useState(false)
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [greeting, setGreeting] = useState(getTimeBasedGreeting())
+  const [greeting, setGreeting] = useState(getTimeBasedGreeting().greeting)
+  const [username, setUsername] = useState(getTimeBasedGreeting().name)
   const [isListening, setIsListening] = useState(false)
   const [recognitionSupported, setRecognitionSupported] = useState(false)
   const recognitionRef = useRef<any>(null)
+  const [showSettingsPopup, setShowSettingsPopup] = useState(false)
+  const [iconColor, setIconColor] = useState("#ef4444") // Default red color
+  const [currentLanguageIndex, setCurrentLanguageIndex] = useState(0)
+
+  // Get current language
+  const currentLanguage = SPEECH_LANGUAGES[currentLanguageIndex]
 
   // Check if speech recognition is supported
   useEffect(() => {
@@ -84,7 +112,7 @@ export default function MessageBox({
     if (recognitionSupported) {
       const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition
       recognitionRef.current = new SpeechRecognition()
-      recognitionRef.current.lang = "bn-BD" // Set language to Bangla
+      recognitionRef.current.lang = currentLanguage.code
       recognitionRef.current.interimResults = false
       recognitionRef.current.continuous = false
 
@@ -108,7 +136,7 @@ export default function MessageBox({
         }
       }
     }
-  }, [recognitionSupported])
+  }, [recognitionSupported, currentLanguage])
 
   // Toggle speech recognition
   const toggleSpeechRecognition = () => {
@@ -122,6 +150,20 @@ export default function MessageBox({
       setIsListening(false)
     } else {
       try {
+        // Only auto-detect language if no manual selection has been made and input is not empty
+        let langIndex = currentLanguageIndex
+        if (inputValue.trim().length > 0) {
+          const detectedLangIndex = detectLanguage(inputValue)
+          // Only change if it's different and we haven't manually set a preference
+          const savedLanguage = localStorage.getItem("orphion-speech-language")
+          if (!savedLanguage) {
+            langIndex = detectedLangIndex
+            setCurrentLanguageIndex(detectedLangIndex)
+          }
+        }
+
+        // Update language before starting
+        recognitionRef.current.lang = SPEECH_LANGUAGES[langIndex].code
         recognitionRef.current.start()
         setIsListening(true)
       } catch (error) {
@@ -131,24 +173,49 @@ export default function MessageBox({
     }
   }
 
+  // Change speech recognition language
+  const handleLanguageChange = (index: number) => {
+    setCurrentLanguageIndex(index)
+
+    // Save preference to localStorage
+    localStorage.setItem("orphion-speech-language", index.toString())
+
+    // Update the speech recognition language immediately if supported
+    if (recognitionSupported && recognitionRef.current) {
+      recognitionRef.current.lang = SPEECH_LANGUAGES[index].code
+    }
+
+    // If currently listening, restart with new language
+    if (isListening) {
+      recognitionRef.current.stop()
+      setTimeout(() => {
+        recognitionRef.current.lang = SPEECH_LANGUAGES[index].code
+        recognitionRef.current.start()
+      }, 100)
+    }
+  }
+
+  // Load saved language preference
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem("orphion-speech-language")
+    if (savedLanguage !== null) {
+      const index = Number.parseInt(savedLanguage)
+      if (!isNaN(index) && index >= 0 && index < SPEECH_LANGUAGES.length) {
+        setCurrentLanguageIndex(index)
+      }
+    }
+  }, [])
+
   // Update greeting every minute
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setGreeting(getTimeBasedGreeting())
+      const timeBasedGreeting = getTimeBasedGreeting()
+      setGreeting(timeBasedGreeting.greeting)
+      setUsername(timeBasedGreeting.name)
     }, 60000) // Update every minute
 
     return () => clearInterval(intervalId)
   }, [])
-
-  // Function to get the icon based on selected mode
-  const getModeIcon = (mode: string) => {
-    switch (mode) {
-      case "Deep Search":
-        return <Pyramid size={16} className="mr-2" />
-      default:
-        return <Sparkles size={16} className="mr-2" />
-    }
-  }
 
   // Handle active chat changes
   useEffect(() => {
@@ -354,11 +421,7 @@ export default function MessageBox({
 
   const handleModeSelect = (mode: string) => {
     setSelectedMode(mode)
-  }
-
-  // Toggle web search dropdown
-  const toggleWebSearchDropdown = () => {
-    setShowWebSearchDropdown(!showWebSearchDropdown)
+    setShowSettingsPopup(false) // Close settings popup after selection
   }
 
   // Toggle search sources display
@@ -371,8 +434,41 @@ export default function MessageBox({
     setLocalShowSearchImages(!localShowSearchImages)
   }
 
-  // Get username from user object
-  const username = "there"
+  // Toggle settings popup
+  const toggleSettingsPopup = () => {
+    setShowSettingsPopup(!showSettingsPopup)
+  }
+
+  // Handle icon color change
+  const handleIconColorChange = (color: string) => {
+    setIconColor(color)
+    // Save to localStorage for persistence
+    localStorage.setItem("orphion-icon-color", color)
+  }
+
+  // Load saved icon color on mount
+  useEffect(() => {
+    const savedColor = localStorage.getItem("orphion-icon-color")
+    if (savedColor) {
+      setIconColor(savedColor)
+    }
+  }, [])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value
+    setInputValue(newValue)
+
+    // Only auto-detect language if no manual preference has been saved
+    const savedLanguage = localStorage.getItem("orphion-speech-language")
+    if (newValue.trim().length === 1 && !isListening && !savedLanguage) {
+      const detectedLangIndex = detectLanguage(newValue)
+      if (detectedLangIndex !== currentLanguageIndex) {
+        setCurrentLanguageIndex(detectedLangIndex)
+        // Save preference to localStorage
+        localStorage.setItem("orphion-speech-language", detectedLangIndex.toString())
+      }
+    }
+  }
 
   return (
     <div className="h-full w-full relative">
@@ -428,13 +524,13 @@ export default function MessageBox({
                   isStartingChat
                     ? "Starting chat..."
                     : isListening
-                      ? "বাংলায় বলুন... (Speak in Bangla...)"
+                      ? currentLanguage.placeholder
                       : attachedImage
                         ? "Describe the image or ask a question about it..."
                         : "Ask Anything..."
                 }
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={handleInputFocus}
                 autoFocus
@@ -450,85 +546,25 @@ export default function MessageBox({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="relative flex items-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      asChild
-                      disabled={chatStarted || isTransitioning || isStartingChat || !!attachedImage}
-                    >
-                      <div
-                        className={`flex items-center border border-neutral-600 rounded-full px-2 py-1 hover:bg-neutral-800/50 transition-colors cursor-pointer bg-neutral-800/30 ${
-                          chatStarted || isTransitioning || isStartingChat || !!attachedImage
-                            ? "opacity-50 cursor-not-allowed pointer-events-none"
-                            : ""
-                        }`}
-                      >
-                        {getModeIcon(selectedMode)}
-                        {!isMobile && <span className="text-xs text-white">{selectedMode}</span>}
-                        <ChevronDown size={14} className="ml-1 text-white" />
-                      </div>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-[#1a1a1a] border-neutral-800 text-white">
-                      <DropdownMenuItem
-                        className="hover:bg-red-800 focus:bg-red-800 cursor-pointer flex items-center text-white"
-                        onClick={() => handleModeSelect("General")}
-                      >
-                        <Sparkles size={16} className="mr-2" />
-                        General
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="hover:bg-red-800 focus:bg-red-800 cursor-pointer flex items-center text-white"
-                        onClick={() => handleModeSelect("Deep Search")}
-                      >
-                        <Pyramid size={16} className="mr-2" />
-                        Deep Search
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                {/* Settings button - icon only */}
+                <button
+                  className={`flex items-center justify-center w-8 h-8 border border-neutral-600 rounded-full hover:bg-neutral-800/50 transition-colors cursor-pointer bg-neutral-800/30 ${
+                    chatStarted || isTransitioning || isStartingChat
+                      ? "opacity-50 cursor-not-allowed pointer-events-none"
+                      : ""
+                  }`}
+                  onClick={toggleSettingsPopup}
+                  disabled={chatStarted || isTransitioning || isStartingChat}
+                  aria-label="Settings"
+                  title="Settings"
+                >
+                  <Settings size={16} style={{ color: iconColor }} />
+                </button>
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Web search button - more compact on mobile */}
-                <div className="relative flex items-center">
-                  <div
-                    className={`flex items-center border border-neutral-600 rounded-full px-2 py-1 hover:bg-neutral-800/50 transition-colors cursor-pointer bg-neutral-800/30 ${
-                      chatStarted || isTransitioning || isStartingChat || !!attachedImage
-                        ? "opacity-50 cursor-not-allowed pointer-events-none"
-                        : ""
-                    }`}
-                    onClick={toggleWebSearchDropdown}
-                  >
-                    <Globe size={18} className="text-white" />
-                    {!isMobile && <span className="ml-2 text-xs text-white">Search Option</span>}
-                  </div>
-
-                  <WebSearchDropdown
-                    isOpen={
-                      showWebSearchDropdown && !chatStarted && !isTransitioning && !isStartingChat && !attachedImage
-                    }
-                    onClose={() => setShowWebSearchDropdown(false)}
-                    showSources={localShowSearchSources}
-                    showImages={localShowSearchImages}
-                    onToggleSources={toggleSearchSources}
-                    onToggleImages={toggleSearchImages}
-                  />
-                </div>
-
-                {/* Microphone button for voice input */}
-                {recognitionSupported && (
-                  <button
-                    className={`text-neutral-400 hover:text-white transition-colors ${
-                      chatStarted || isTransitioning || isStartingChat ? "opacity-50 cursor-not-allowed" : ""
-                    } ${isListening ? "text-red-500" : ""}`}
-                    onClick={toggleSpeechRecognition}
-                    disabled={chatStarted || isTransitioning || isStartingChat}
-                    aria-label={isListening ? "Stop listening" : "Start voice input (Bangla)"}
-                    title={isListening ? "Stop listening" : "Start voice input (Bangla)"}
-                  >
-                    {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-                  </button>
-                )}
+                {/* Microphone button for voice input - removed from UI since we'll use the send button area */}
+                {/* This button is now hidden as we're using the send button area for mic functionality */}
 
                 {/* Image attachment button (using the paperclip icon) */}
                 <div className="relative">
@@ -557,22 +593,40 @@ export default function MessageBox({
                       aria-label="Attach image"
                       title="Attach image"
                     >
-                      <Paperclip size={18} className="translate-y-0.5" />
+                      <Paperclip size={18} className="translate-y-0.5" style={{ color: iconColor }} />
                     </button>
                   )}
                 </div>
 
-                <button
-                  className={`bg-red-700 hover:bg-red-600 p-1.5 rounded-full transition-colors ${
-                    (!inputValue.trim() && !attachedImage) || isTyping || chatStarted || isStartingChat
-                      ? "opacity-50 cursor-not-allowed bg-neutral-700"
-                      : ""
-                  }`}
-                  onClick={handleStartChat}
-                  disabled={(!inputValue.trim() && !attachedImage) || isTyping || chatStarted || isStartingChat}
-                >
-                  <ArrowUp size={14} />
-                </button>
+                {inputValue.trim() === "" && !attachedImage ? (
+                  // Show mic button when input is empty
+                  <button
+                    className={`p-1.5 rounded-full transition-colors ${
+                      isTyping || chatStarted || isStartingChat
+                        ? "opacity-50 cursor-not-allowed bg-neutral-700"
+                        : "bg-red-700 hover:bg-red-600"
+                    }`}
+                    onClick={toggleSpeechRecognition}
+                    disabled={isTyping || chatStarted || isStartingChat || !recognitionSupported}
+                    aria-label="Voice input"
+                  >
+                    <Mic size={14} />
+                  </button>
+                ) : (
+                  // Show send button when there's input
+                  <button
+                    className={`p-1.5 rounded-full transition-colors ${
+                      isTyping || chatStarted || isStartingChat ? "opacity-50 cursor-not-allowed bg-neutral-700" : ""
+                    }`}
+                    style={{
+                      backgroundColor: isTyping || chatStarted || isStartingChat ? "" : iconColor,
+                    }}
+                    onClick={handleStartChat}
+                    disabled={isTyping || chatStarted || isStartingChat}
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -583,6 +637,22 @@ export default function MessageBox({
           Orphion Agent Preview
         </div>
       </div>
+
+      {/* Settings Popup */}
+      <SettingsPopup
+        isOpen={showSettingsPopup}
+        onClose={() => setShowSettingsPopup(false)}
+        onModeSelect={handleModeSelect}
+        selectedMode={selectedMode}
+        showSearchSources={localShowSearchSources}
+        showSearchImages={localShowSearchImages}
+        onToggleSearchSources={toggleSearchSources}
+        onToggleSearchImages={toggleSearchImages}
+        onIconColorChange={handleIconColorChange}
+        iconColor={iconColor}
+        currentLanguageIndex={currentLanguageIndex}
+        onLanguageChange={handleLanguageChange}
+      />
 
       {/* API Key Warning Modal */}
       <ApiKeyWarning isOpen={showApiKeyWarning} onClose={() => setShowApiKeyWarning(false)} />

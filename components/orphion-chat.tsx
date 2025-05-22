@@ -15,6 +15,7 @@ import {
   ImageIcon,
   Globe,
   ArrowUp,
+  Mic,
 } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import Image from "next/image"
@@ -61,6 +62,15 @@ interface OrphionChatProps {
   showSearchSources?: boolean
   showSearchImages?: boolean
   initialAttachedImage?: string | null
+}
+
+// Function to detect language from text
+const detectLanguage = (text: string): string => {
+  // Simple detection based on first few characters
+  // Bangla Unicode range: \u0980-\u09FF
+  const firstChar = text.trim()[0] || ""
+  const isBangla = /[\u0980-\u09FF]/.test(firstChar)
+  return isBangla ? "bn-BD" : "en-US" // Bangla or English
 }
 
 export default function OrphionChat({
@@ -123,6 +133,12 @@ export default function OrphionChat({
   const [isCanvasOpen, setIsCanvasOpen] = useState(false)
   const [canvasContent, setCanvasContent] = useState("")
   const [canvasMessageId, setCanvasMessageId] = useState<string | null>(null)
+
+  // Add state for speech recognition
+  const [isListening, setIsListening] = useState(false)
+  const [recognitionSupported, setRecognitionSupported] = useState(false)
+  const recognitionRef = useRef<any>(null)
+  const [recognitionLang, setRecognitionLang] = useState("en-US")
 
   // Function to get the icon based on selected mode
   const getModeIcon = (mode: string) => {
@@ -694,6 +710,43 @@ export default function OrphionChat({
     setLocalShowSearchImages(showSearchImages)
   }, [showSearchImages])
 
+  // Add useEffect to check if speech recognition is supported
+  useEffect(() => {
+    const isSupported = "SpeechRecognition" in window || "webkitSpeechRecognition" in window
+    setRecognitionSupported(isSupported)
+  }, [])
+
+  // Add useEffect to initialize speech recognition
+  useEffect(() => {
+    if (recognitionSupported) {
+      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition
+      recognitionRef.current = new SpeechRecognition()
+      recognitionRef.current.lang = recognitionLang
+      recognitionRef.current.interimResults = false
+      recognitionRef.current.continuous = false
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript
+        setInputValue((prev) => prev + transcript)
+      }
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false)
+      }
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error)
+        setIsListening(false)
+      }
+
+      return () => {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop()
+        }
+      }
+    }
+  }, [recognitionSupported, recognitionLang])
+
   // Set initial attached image if provided
   useEffect(() => {
     if (initialAttachedImage) {
@@ -952,6 +1005,61 @@ export default function OrphionChat({
   // Add this function to handle editor toggle
   const handleToggleEditor = () => {
     setUseMonacoEditor(!useMonacoEditor)
+  }
+
+  // Update the toggleSpeechRecognition function in OrphionChat to detect language from current input
+  // Replace the existing toggleSpeechRecognition function with:
+
+  // Add function to toggle speech recognition
+  const toggleSpeechRecognition = () => {
+    if (!recognitionSupported) {
+      alert("Speech recognition is not supported in your browser")
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    } else {
+      try {
+        // Check if there's a saved language preference
+        const savedLanguage = localStorage.getItem("orphion-speech-language")
+        let detectedLang = recognitionLang
+
+        // Only auto-detect if no saved preference and there's input text
+        if (!savedLanguage && inputValue.trim().length > 0) {
+          detectedLang = detectLanguage(inputValue)
+        } else if (savedLanguage) {
+          // Use saved preference
+          const langIndex = Number.parseInt(savedLanguage)
+          if (!isNaN(langIndex) && langIndex >= 0 && langIndex < 2) {
+            detectedLang = langIndex === 0 ? "en-US" : "bn-BD"
+          }
+        }
+
+        recognitionRef.current.lang = detectedLang
+        setRecognitionLang(detectedLang)
+
+        recognitionRef.current.start()
+        setIsListening(true)
+      } catch (error) {
+        console.error("Failed to start speech recognition:", error)
+        setIsListening(false)
+      }
+    }
+  }
+
+  // Add function to handle input change for language detection
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value
+    setInputValue(newValue)
+
+    // Only auto-detect language if no saved preference exists
+    const savedLanguage = localStorage.getItem("orphion-speech-language")
+    if (newValue.trim().length === 1 && !isListening && !savedLanguage) {
+      const detectedLang = detectLanguage(newValue)
+      setRecognitionLang(detectedLang)
+    }
   }
 
   return (
@@ -1266,7 +1374,7 @@ export default function OrphionChat({
         <div className="bg-[#1a1a1a] rounded-full flex items-center w-full max-w-[800px] py-1">
           <Textarea
             ref={inputRef}
-            className={`w-full bg-transparent border-none text-base placeholder:text-neutral-500 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-6 resize-none textarea-3-lines modern-scrollbar ${isTyping ? "opacity-50" : ""}`}
+            className={`w-full bg-transparent border-none text-base placeholder:text-neutral-500 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-6 resize-none textarea-3-lines modern-scrollbar ${isTyping ? "opacity-50" : ""} ${isListening ? "border-red-500 border" : ""}`}
             placeholder={
               isTyping
                 ? "Waiting for response..."
@@ -1275,11 +1383,16 @@ export default function OrphionChat({
                   : "Ask follow-up"
             }
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             disabled={isTyping || isPendingCreation}
             autoFocus
           />
+          {isListening && (
+            <div className="absolute right-16 top-3 animate-pulse">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            </div>
+          )}
 
           <div className="flex items-center pr-4 gap-2 shrink-0">
             <div className="relative flex items-center">
@@ -1368,17 +1481,32 @@ export default function OrphionChat({
               )}
             </div>
 
-            <button
-              onClick={handleSendMessage}
-              className={`bg-red-700 hover:bg-red-600 p-2 rounded-full transition-colors ${
-                (inputValue.trim() === "" && !attachedImage) || isTyping || isPendingCreation
-                  ? "opacity-50 cursor-not-allowed bg-neutral-700"
-                  : ""
-              }`}
-              disabled={(inputValue.trim() === "" && !attachedImage) || isTyping || isPendingCreation}
-            >
-              <ArrowUp size={14} />
-            </button>
+            {inputValue.trim() === "" && !attachedImage ? (
+              // Show mic button when input is empty
+              <button
+                onClick={toggleSpeechRecognition}
+                className={`p-2 rounded-full transition-colors ${
+                  isTyping || isPendingCreation
+                    ? "opacity-50 cursor-not-allowed bg-neutral-700"
+                    : "bg-red-700 hover:bg-red-600"
+                }`}
+                disabled={isTyping || isPendingCreation || !recognitionSupported}
+                aria-label="Voice input"
+              >
+                <Mic size={14} />
+              </button>
+            ) : (
+              // Show send button when there's input
+              <button
+                onClick={handleSendMessage}
+                className={`bg-red-700 hover:bg-red-600 p-2 rounded-full transition-colors ${
+                  isTyping || isPendingCreation ? "opacity-50 cursor-not-allowed bg-neutral-700" : ""
+                }`}
+                disabled={isTyping || isPendingCreation}
+              >
+                <ArrowUp size={14} />
+              </button>
+            )}
           </div>
         </div>
       </div>
