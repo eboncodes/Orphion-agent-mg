@@ -16,6 +16,7 @@ function OrphionUIContent() {
   const [isCreatingChat, setIsCreatingChat] = useState(false)
   const [pendingChatId, setPendingChatId] = useState<string | null>(null)
   const [showArchives, setShowArchives] = useState(false)
+  const [canvasOpen, setCanvasOpen] = useState(false)
 
   // Set sidebar closed by default on mobile
   useEffect(() => {
@@ -25,6 +26,29 @@ function OrphionUIContent() {
       setIsSidebarOpen(true)
     }
   }, [isMobile])
+
+  // Prevent sidebar from opening when canvas is open on mobile
+  useEffect(() => {
+    if (canvasOpen && isMobile) {
+      setIsSidebarOpen(false)
+    }
+  }, [canvasOpen, isMobile])
+
+  const preventSidebarOpen = useCallback(() => {
+    if (isMobile) {
+      setIsSidebarOpen(false)
+    }
+  }, [isMobile])
+
+  const handleCanvasOpen = useCallback(
+    (isOpen: boolean) => {
+      setCanvasOpen(isOpen)
+      if (isOpen && isMobile) {
+        setIsSidebarOpen(false)
+      }
+    },
+    [isMobile],
+  )
 
   const loadSavedChats = useCallback(() => {
     const chats = getSavedSessions()
@@ -147,6 +171,10 @@ function OrphionUIContent() {
 
   // Add a function to toggle sidebar and pass it to MessageBox
   const toggleSidebar = () => {
+    // Don't allow sidebar to open if canvas is open on mobile
+    if (canvasOpen && isMobile) {
+      return
+    }
     setIsSidebarOpen(!isSidebarOpen)
   }
 
@@ -236,6 +264,8 @@ function OrphionUIContent() {
               onSidebarToggle={toggleSidebar}
               pendingChatId={pendingChatId}
               showSearchSources={true}
+              onCanvasOpen={handleCanvasOpen}
+              preventSidebarOpen={preventSidebarOpen}
             />
           )}
         </div>

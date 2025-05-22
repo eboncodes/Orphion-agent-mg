@@ -118,9 +118,10 @@ interface CanvasPanelProps {
   onClose: () => void
   content: string
   onSave: (content: string) => void
+  preventSidebarOpen?: () => void
 }
 
-export default function CanvasPanel({ isOpen, onClose, content, onSave }: CanvasPanelProps) {
+export default function CanvasPanel({ isOpen, onClose, content, onSave, preventSidebarOpen }: CanvasPanelProps) {
   const [editMode, setEditMode] = useState(false)
   const [editedContent, setEditedContent] = useState(content)
   const [isCopied, setIsCopied] = useState(false)
@@ -134,6 +135,13 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const [isClient, setIsClient] = useState(false)
   const isMobile = useIsMobile()
+
+  // Call preventSidebarOpen when canvas is opened
+  useEffect(() => {
+    if (isOpen && preventSidebarOpen) {
+      preventSidebarOpen()
+    }
+  }, [isOpen, preventSidebarOpen])
 
   // Update edited content when the input content changes
   useEffect(() => {
@@ -495,12 +503,21 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
   return (
     <>
       {isOpen && <style dangerouslySetInnerHTML={{ __html: canvasStyles }} />}
-      <div className="fixed inset-0 z-[999] flex justify-end" onClick={handleCanvasClick}>
+      <div className="fixed inset-0 z-[9999] flex justify-end" onClick={handleCanvasClick}>
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose()
+          }}
+        />
 
         {/* Canvas panel */}
-        <div className="relative w-full max-w-3xl bg-gray-900 h-full overflow-hidden animate-slideInRight">
+        <div
+          className="relative w-full max-w-3xl bg-gray-900 h-full overflow-hidden animate-slideInRight"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
             <h2 className="text-lg font-medium text-white">Canvas</h2>
@@ -508,13 +525,19 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
               {editMode ? (
                 <>
                   <button
-                    onClick={() => setEditMode(false)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditMode(false)
+                    }}
                     className="px-3 py-1 text-sm text-gray-300 hover:bg-gray-800 rounded-md"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleSave}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSave()
+                    }}
                     className="px-3 py-1 text-sm bg-red-600 text-white hover:bg-red-700 rounded-md"
                   >
                     Save
@@ -524,7 +547,10 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                 <>
                   {/* Import button */}
                   <button
-                    onClick={handleImportClick}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleImportClick()
+                    }}
                     className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
                     title="Import file"
                     disabled={isImporting}
@@ -541,7 +567,10 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
 
                   {/* Copy button */}
                   <button
-                    onClick={handleCopy}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleCopy()
+                    }}
                     className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
                     title="Copy to clipboard"
                   >
@@ -551,7 +580,10 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                   {/* Export dropdown */}
                   <div className="relative" ref={exportDropdownRef}>
                     <button
-                      onClick={() => setShowExportDropdown(!showExportDropdown)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowExportDropdown(!showExportDropdown)
+                      }}
                       className="p-2 text-gray-300 hover:bg-gray-800 rounded-full flex items-center"
                       title="Export options"
                     >
@@ -562,7 +594,10 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                       <div className="absolute right-0 mt-1 w-36 bg-gray-800 rounded-md shadow-lg overflow-hidden z-10 animate-fadeIn">
                         <div className="py-1">
                           <button
-                            onClick={handleExportWord}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleExportWord()
+                            }}
                             className="flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
                             disabled={isExportingWord}
                           >
@@ -574,7 +609,10 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                             Word
                           </button>
                           <button
-                            onClick={handleExportPDF}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleExportPDF()
+                            }}
                             className="flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
                             disabled={isExporting}
                           >
@@ -592,7 +630,10 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
 
                   {/* Edit button */}
                   <button
-                    onClick={() => setEditMode(true)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditMode(true)
+                    }}
                     className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
                     title="Edit content"
                   >
@@ -603,7 +644,10 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
 
               {/* Close button */}
               <button
-                onClick={onClose}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onClose()
+                }}
                 className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
                 title="Close canvas"
               >
@@ -613,16 +657,21 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
           </div>
 
           {/* Content */}
-          <div className="h-[calc(100%-64px)] overflow-y-auto bg-gray-900 p-0">
+          <div className="h-[calc(100%-64px)] overflow-y-auto bg-gray-900 p-0" onClick={(e) => e.stopPropagation()}>
             {editMode ? (
               <Textarea
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
                 className="w-full h-full min-h-[500px] p-4 border-gray-700 focus:border-red-500 focus:ring-red-500 canvas-dark-textarea"
                 placeholder="Edit content..."
+                onClick={(e) => e.stopPropagation()}
               />
             ) : (
-              <div ref={contentRef} className="prose prose-lg max-w-none canvas-content">
+              <div
+                ref={contentRef}
+                className="prose prose-lg max-w-none canvas-content"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <FormattedText text={editedContent} useMonaco={false} useMathjax={true} theme="dark" />
               </div>
             )}
