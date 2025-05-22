@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { X, Download, Copy, Check, FileUp, Loader2, FileText } from "lucide-react"
+import { X, Download, Copy, Check, Upload, Loader2, FileText, Pencil } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import FormattedText from "./formatted-text"
 import { jsPDF } from "jspdf"
@@ -12,6 +12,7 @@ import mammoth from "mammoth"
 import { Document, Packer, Paragraph, HeadingLevel } from "docx"
 import FileSaver from "file-saver"
 import { delay } from "@/lib/utils"
+import { useIsMobile } from "../hooks/use-mobile"
 
 // First, update the imports to include the PDF.js library
 // Add these imports at the top with the other imports
@@ -126,10 +127,13 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
   const [isExporting, setIsExporting] = useState(false)
   const [isExportingWord, setIsExportingWord] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const exportDropdownRef = useRef<HTMLDivElement>(null)
   const [isClient, setIsClient] = useState(false)
+  const isMobile = useIsMobile()
 
   // Update edited content when the input content changes
   useEffect(() => {
@@ -148,6 +152,20 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
 
     // Canvas operations here
     // ...
+  }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setShowExportDropdown(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
   }, [])
 
   // Handle save
@@ -172,6 +190,7 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
     if (!contentRef.current) return
 
     setIsExporting(true)
+    setShowExportDropdown(false)
 
     try {
       // Create a clone of the content div with white background for PDF
@@ -284,6 +303,7 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
     if (!contentRef.current) return
 
     setIsExportingWord(true)
+    setShowExportDropdown(false)
 
     try {
       // Create a simplified version of the content for Word export
@@ -470,7 +490,7 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
   return (
     <>
       {isOpen && <style dangerouslySetInnerHTML={{ __html: canvasStyles }} />}
-      <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="fixed inset-0 z-[100] flex justify-end">
         {/* Backdrop */}
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
@@ -497,18 +517,14 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                 </>
               ) : (
                 <>
+                  {/* Import button */}
                   <button
                     onClick={handleImportClick}
-                    className="flex items-center px-3 py-1 text-sm bg-gray-800 text-gray-200 hover:bg-gray-700 rounded-md"
-                    title="Import document or code file"
+                    className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
+                    title="Import file"
                     disabled={isImporting}
                   >
-                    {isImporting ? (
-                      <Loader2 size={16} className="mr-1 animate-spin" />
-                    ) : (
-                      <FileUp size={16} className="mr-1" />
-                    )}
-                    Import File
+                    {isImporting ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
                   </button>
                   <input
                     type="file"
@@ -517,6 +533,8 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                     accept=".docx,.pdf,.txt,.js,.ts,.jsx,.tsx,.html,.css,.json,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,text/plain,text/javascript,text/typescript,text/html,text/css,application/json,text/markdown"
                     onChange={handleFileChange}
                   />
+
+                  {/* Copy button */}
                   <button
                     onClick={handleCopy}
                     className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
@@ -524,42 +542,61 @@ export default function CanvasPanel({ isOpen, onClose, content, onSave }: Canvas
                   >
                     {isCopied ? <Check size={20} /> : <Copy size={20} />}
                   </button>
-                  <div className="flex items-center gap-1">
+
+                  {/* Export dropdown */}
+                  <div className="relative" ref={exportDropdownRef}>
                     <button
-                      onClick={handleExportWord}
-                      className="flex items-center px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-md"
-                      title="Download as Word document"
-                      disabled={isExportingWord}
+                      onClick={() => setShowExportDropdown(!showExportDropdown)}
+                      className="p-2 text-gray-300 hover:bg-gray-800 rounded-full flex items-center"
+                      title="Export options"
                     >
-                      {isExportingWord ? (
-                        <Loader2 size={16} className="mr-1 animate-spin" />
-                      ) : (
-                        <FileText size={16} className="mr-1" />
-                      )}
-                      Word
+                      <Download size={20} />
                     </button>
-                    <button
-                      onClick={handleExportPDF}
-                      className="flex items-center px-3 py-1 text-sm bg-red-600 text-white hover:bg-red-700 rounded-md"
-                      title="Download as PDF"
-                      disabled={isExporting}
-                    >
-                      {isExporting ? (
-                        <Loader2 size={16} className="mr-1 animate-spin" />
-                      ) : (
-                        <Download size={16} className="mr-1" />
-                      )}
-                      PDF
-                    </button>
+
+                    {showExportDropdown && (
+                      <div className="absolute right-0 mt-1 w-36 bg-gray-800 rounded-md shadow-lg overflow-hidden z-10 animate-fadeIn">
+                        <div className="py-1">
+                          <button
+                            onClick={handleExportWord}
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+                            disabled={isExportingWord}
+                          >
+                            {isExportingWord ? (
+                              <Loader2 size={16} className="mr-2 animate-spin" />
+                            ) : (
+                              <FileText size={16} className="mr-2" />
+                            )}
+                            Word
+                          </button>
+                          <button
+                            onClick={handleExportPDF}
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+                            disabled={isExporting}
+                          >
+                            {isExporting ? (
+                              <Loader2 size={16} className="mr-2 animate-spin" />
+                            ) : (
+                              <Download size={16} className="mr-2" />
+                            )}
+                            PDF
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Edit button */}
                   <button
                     onClick={() => setEditMode(true)}
-                    className="px-3 py-1 text-sm bg-gray-800 text-gray-200 hover:bg-gray-700 rounded-md"
+                    className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
+                    title="Edit content"
                   >
-                    Edit
+                    <Pencil size={20} />
                   </button>
                 </>
               )}
+
+              {/* Close button */}
               <button
                 onClick={onClose}
                 className="p-2 text-gray-300 hover:bg-gray-800 rounded-full"
