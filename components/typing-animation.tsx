@@ -14,12 +14,13 @@ interface TypingAnimationProps {
 export default function TypingAnimation({
   text,
   onComplete,
-  typingSpeed = 10, // Slower default speed for more visible typing effect
+  typingSpeed = 1, // Much faster default speed
   isComplete = false,
 }: TypingAnimationProps) {
   const [displayedText, setDisplayedText] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFinished, setIsFinished] = useState(isComplete)
+  const [visibleChars, setVisibleChars] = useState<boolean[]>([])
 
   // Add a unique key based on text content to ensure proper re-rendering
   const textKey = React.useMemo(() => text, [text])
@@ -29,40 +30,72 @@ export default function TypingAnimation({
       setDisplayedText(text)
       setCurrentIndex(text.length)
       setIsFinished(true)
+      setVisibleChars(new Array(text.length).fill(true))
       onComplete?.()
       return
     }
 
     if (currentIndex < text.length) {
-      // Add a variable typing speed to make it feel more natural
-      // Characters are added one at a time with variable delays
-      const randomDelay = Math.max(5, Math.floor(Math.random() * typingSpeed * 2))
+      // Calculate how many characters to add per tick
+      // This creates a more natural streaming effect with variable speeds
+      const charsToAdd = Math.max(1, Math.floor(text.length / 100) + 1)
 
       const timeout = setTimeout(() => {
-        setDisplayedText(text.substring(0, currentIndex + 1))
-        setCurrentIndex(currentIndex + 1)
-      }, randomDelay)
+        const nextIndex = Math.min(currentIndex + charsToAdd, text.length)
+        setDisplayedText(text.substring(0, nextIndex))
+
+        // Update visible characters array with fade-in effect
+        const newVisibleChars = [...visibleChars]
+        for (let i = currentIndex; i < nextIndex; i++) {
+          newVisibleChars[i] = true
+        }
+        setVisibleChars(newVisibleChars)
+
+        setCurrentIndex(nextIndex)
+      }, typingSpeed)
 
       return () => clearTimeout(timeout)
     } else if (!isFinished) {
       setIsFinished(true)
       onComplete?.()
     }
-  }, [currentIndex, text, typingSpeed, isFinished, onComplete, isComplete])
+  }, [currentIndex, text, typingSpeed, isFinished, onComplete, isComplete, visibleChars])
 
   // Reset animation when text changes
   useEffect(() => {
     setDisplayedText("")
     setCurrentIndex(0)
     setIsFinished(false)
-  }, [textKey])
+    setVisibleChars(new Array(text.length).fill(false))
+  }, [textKey, text.length])
+
+  // Render the text with fade-in animation for each character
+  const renderAnimatedText = () => {
+    return text
+      .substring(0, currentIndex)
+      .split("")
+      .map((char, index) => (
+        <span
+          key={index}
+          className={`inline-block transition-opacity duration-200 ${
+            visibleChars[index] ? "opacity-100" : "opacity-0"
+          }`}
+          style={{
+            animationDelay: `${index * 0.01}s`,
+            transitionDelay: `${index * 0.01}s`,
+          }}
+        >
+          {char}
+        </span>
+      ))
+  }
 
   return (
     <>
       {!isFinished ? (
         <span className="inline-block">
-          {displayedText}
-          <span className="typing-cursor animate-blink">|</span>
+          {renderAnimatedText()}
+          <span className="typing-cursor">|</span>
         </span>
       ) : (
         <FormattedText text={text} />

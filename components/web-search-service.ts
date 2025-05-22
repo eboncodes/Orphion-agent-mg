@@ -35,21 +35,26 @@ export interface WebSearchMetadata {
   searchMode?: string
 }
 
-// Modify the generateSearchQueries function to create more diverse queries
-// Find the function that generates search queries for Deep Search mode
-
-// Replace the existing generateSearchQueries function with this simpler version:
-
+// Completely rewrite the generateSearchQueries function to create more thoughtful, diverse queries
 export async function generateSearchQueries(userQuery: string): Promise<string[]> {
   try {
-    // Create a prompt to generate diverse search queries
-    const prompt = `
-I need to perform a comprehensive web search about: "${userQuery}"
+    // Clean the initial query
+    const cleanedUserQuery = cleanSearchQuery(userQuery)
 
-Please generate 4-5 different search queries that will help me gather comprehensive information about this topic.
-The queries should be diverse and help me get a detailed understanding of the topic from different angles.
-Don't add specific focuses like "latest developments" or "practical applications" - just create natural variations
-that would help gather comprehensive information.
+    // Create a more sophisticated prompt to generate diverse and deep search queries
+    const prompt = `
+I need to perform a comprehensive, in-depth web search about: "${cleanedUserQuery}"
+
+Please generate 6-8 highly specific, diverse search queries that will help me gather comprehensive information about this topic from multiple angles and perspectives.
+
+Your queries should:
+1. Cover different aspects, dimensions, and facets of the topic
+2. Include technical, practical, theoretical, and historical perspectives where relevant
+3. Target specific sub-topics, components, or related areas
+4. Use precise terminology and specific phrasing that would yield detailed results
+5. Include queries that would find academic or professional sources
+6. Avoid being too general or vague
+7. Be formulated to discover nuanced information that casual searches might miss
 
 Format your response as a simple list of search queries, one per line, with no additional text.
 `
@@ -57,30 +62,32 @@ Format your response as a simple list of search queries, one per line, with no a
     // Use our AI model to generate diverse search queries
     const { response } = await generateAIResponse(prompt, [])
 
-    // Parse the response into individual queries
+    // Parse the response into individual queries and clean each one
     const queries = response
       .split("\n")
-      .map((q) => q.trim())
+      .map((q) => cleanSearchQuery(q.trim()))
       .filter((q) => q && q.length > 5)
 
-    // Always include the original query
-    const allQueries = [userQuery, ...queries]
+    // Always include the original cleaned query
+    const allQueries = [cleanedUserQuery, ...queries]
 
     // Remove duplicates and very similar queries
     const uniqueQueries = Array.from(new Set(allQueries))
 
-    // Ensure we have at least 3 queries
-    if (uniqueQueries.length < 3) {
-      // Add simple variations of the original query
-      uniqueQueries.push(`${userQuery} detailed information`)
-      uniqueQueries.push(`${userQuery} comprehensive explanation`)
+    // Ensure we have at least 4 queries
+    if (uniqueQueries.length < 4) {
+      // Add more sophisticated variations of the original query
+      uniqueQueries.push(`${cleanedUserQuery} comprehensive analysis 2025`)
+      uniqueQueries.push(`${cleanedUserQuery} detailed technical explanation`)
+      uniqueQueries.push(`${cleanedUserQuery} academic research findings`)
+      uniqueQueries.push(`${cleanedUserQuery} expert perspectives and insights`)
     }
 
     console.log("Generated search queries:", uniqueQueries)
-    return uniqueQueries.slice(0, 5) // Limit to 5 queries maximum
+    return uniqueQueries.slice(0, 8) // Allow up to 8 queries for more comprehensive results
   } catch (error) {
     console.error("Error generating search queries:", error)
-    return [userQuery] // Fall back to the original query
+    return [cleanSearchQuery(userQuery)] // Fall back to the original query, but clean it
   }
 }
 
@@ -91,7 +98,10 @@ export async function performSingleSearch(
   maxResults = 5,
 ): Promise<TavilySearchResponse> {
   try {
-    console.log(`Performing web search for: "${query}" with depth: ${searchDepth}, max results: ${maxResults}`)
+    // Clean the query before using it
+    const cleanedQuery = cleanSearchQuery(query)
+
+    console.log(`Performing web search for: "${cleanedQuery}" with depth: ${searchDepth}, max results: ${maxResults}`)
 
     // Get the API key from localStorage
     const { tavilyApiKey } = getApiKeys()
@@ -111,7 +121,7 @@ export async function performSingleSearch(
         Authorization: `Bearer ${tavilyApiKey}`,
       },
       body: JSON.stringify({
-        query,
+        query: cleanedQuery, // Use the cleaned query here
         search_depth: searchDepth,
         max_results: maxResults,
         include_answer: "advanced",
@@ -137,7 +147,7 @@ export async function performSingleSearch(
     }
 
     const data = await response.json()
-    console.log(`Web search results received: ${data.results.length} results for query "${query}"`)
+    console.log(`Web search results received: ${data.results.length} results for query "${cleanedQuery}"`)
 
     // Process the results to ensure all required fields
     const processedResults = data.results.map((result: TavilySearchResult) => ({
@@ -170,7 +180,7 @@ export async function performWebSearch(
     let searchDepth = "basic" // Default for General mode
 
     if (mode === "Deep Search") {
-      maxResults = 20
+      maxResults = 30 // Increased from 20 to 30 for more comprehensive results
       searchDepth = "advanced"
     }
 
@@ -191,11 +201,11 @@ export async function performWebSearch(
           onSearchProgress(searchQuery, false)
         }
 
-        // Perform the search - use 20 results for each query in Deep Search
+        // Perform the search - use 30 results for each query in Deep Search
         const searchResponse = await performSingleSearch(
           searchQuery,
           searchDepth,
-          20, // Fixed 20 results for each query in Deep Search
+          30, // Increased from 20 to 30 for more comprehensive results
         )
 
         // Notify about search completion
@@ -264,40 +274,53 @@ export async function summarizeWebSearchResults(
   mode = "General",
 ): Promise<string> {
   try {
+    // Extract potential format requirements from the query
+    const formatRequirements = detectFormatRequirements(query)
+
     // Create a prompt for the AI to summarize the search results
     let summarizationPrompt = ""
 
     if (mode === "Deep Search") {
-      // For Deep Search, create a more detailed analysis prompt
+      // For Deep Search, create a much more detailed analysis prompt
       summarizationPrompt = `
-I need you to create a comprehensive, detailed analysis of the following web search results for the query: "${query}"
+I need you to create an extremely comprehensive, detailed, and in-depth analysis of the following web search results for the query: "${query}"
+
+${formatRequirements ? `The user has requested this in the format of: ${formatRequirements}. Please ensure your response follows this format.` : ""}
 
 Here is the answer provided by the search engine:
 ${searchResponse.answer}
 
 Here are the top search results:
 ${searchResponse.results
-  .slice(0, 10)
-  .map((result) => `- ${result.title}: ${result.content.substring(0, 300)}...`)
+  .slice(0, 15) // Increased from 10 to 15 for more comprehensive analysis
+  .map((result) => `- ${result.title}: ${result.content.substring(0, 500)}...`) // Increased from 300 to 500 characters
   .join("\n\n")}
 
-Please provide a thorough, well-structured analysis that:
-1. Explores the topic in depth with multiple perspectives
-2. Includes key facts, statistics, and detailed information from the search results
-3. Is organized in clear sections with headings where appropriate
+Please provide an extremely thorough, well-structured, and comprehensive analysis that:
+1. Explores the topic in exceptional depth with multiple perspectives and angles
+2. Includes ALL relevant facts, statistics, examples, and detailed information from the search results
+3. Is organized in clear sections with proper headings, subheadings, and a logical structure
 4. Provides nuanced insights and connections between different aspects of the topic
-5. IMPORTANT: DO NOT include any source citations, references, or links in your response
-6. DO NOT mention where the information comes from
-7. DO NOT use phrases like "according to [source]" or "as reported by [source]"
-8. Just present the information directly as if it's common knowledge
-9. DO NOT include any reasoning or thinking process in your response
+5. Includes technical details, methodologies, and processes where relevant
+6. Covers historical context, current state, and future implications where applicable
+7. IMPORTANT: Your response should be VERY DETAILED and COMPREHENSIVE - at least 1000-1500 words
+8. DO NOT summarize or condense information - provide the FULL DEPTH of information available
+9. IMPORTANT: DO NOT include any source citations, references, or links in your response
+10. DO NOT mention where the information comes from
+11. DO NOT use phrases like "according to [source]" or "as reported by [source]"
+12. Just present the information directly as if it's common knowledge
+13. DO NOT include any reasoning or thinking process in your response
 
-Your response should be comprehensive, detailed, and informative but should NOT reference any sources at all.
+${formatRequirements ? `Remember to format your response as ${formatRequirements} as requested by the user.` : ""}
+
+Your response should be extremely comprehensive, detailed, and informative but should NOT reference any sources at all.
 `
     } else {
-      // For General mode, use the original summarization prompt
+      // For General mode, use a slightly enhanced summarization prompt
       summarizationPrompt = `
 I need you to summarize the following web search results for the query: "${query}"
+
+${formatRequirements ? `The user has requested this in the format of: ${formatRequirements}. Please ensure your response follows this format.` : ""}
 
 Here is the answer provided by the search engine:
 ${searchResponse.answer}
@@ -317,6 +340,8 @@ Please provide a comprehensive, well-structured summary that:
 6. DO NOT use phrases like "according to [source]" or "as reported by [source]"
 7. Just present the information directly as if it's common knowledge
 8. DO NOT include any reasoning or thinking process in your response
+
+${formatRequirements ? `Remember to format your response as ${formatRequirements} as requested by the user.` : ""}
 
 Your response should be informative but should NOT reference any sources at all.
 `
@@ -370,4 +395,62 @@ function cleanSourceCitations(text: string): string {
     .trim()
 
   return cleaned
+}
+
+// Add this helper function at the bottom of the file
+function cleanSearchQuery(query: string): string {
+  return (
+    query
+      // Remove any meta instructions that might have slipped through
+      .replace(/\b(search for|find information about|look up|query for)\b/gi, "")
+      // Remove phrases like "latest" or "current" that are already handled by adding the year
+      .replace(/\b(latest|current|recent|up-to-date|newest)\s+/gi, "")
+      // Remove any remaining placeholder text
+      .replace(/\b(blah|rubbish|garbage|nonsense|stuff|prompt here|here)\b.*$/i, "")
+      // Clean up any trailing punctuation or conjunctions
+      .replace(/\s*([-,;:]|and|or|the)\s*$/i, "")
+      .trim()
+  )
+}
+
+// New function to detect format requirements in the user query
+function detectFormatRequirements(query: string): string | null {
+  const lowerQuery = query.toLowerCase()
+
+  // Check for documentation request
+  if (lowerQuery.includes("documentation") || lowerQuery.includes("document") || lowerQuery.includes("docs")) {
+    return "comprehensive documentation"
+  }
+
+  // Check for report request
+  if (
+    lowerQuery.includes("report") ||
+    lowerQuery.includes("analysis report") ||
+    lowerQuery.includes("detailed report")
+  ) {
+    return "detailed report"
+  }
+
+  // Check for guide request
+  if (lowerQuery.includes("guide") || lowerQuery.includes("tutorial") || lowerQuery.includes("how-to")) {
+    return "step-by-step guide"
+  }
+
+  // Check for comparison request
+  if (
+    lowerQuery.includes("compare") ||
+    lowerQuery.includes("comparison") ||
+    lowerQuery.includes("versus") ||
+    lowerQuery.includes("vs")
+  ) {
+    return "detailed comparison"
+  }
+
+  // Check for review request
+  if (lowerQuery.includes("review") || lowerQuery.includes("evaluation") || lowerQuery.includes("assessment")) {
+    return "comprehensive review"
+  }
+
+  // No specific format detected
+  return null
 }

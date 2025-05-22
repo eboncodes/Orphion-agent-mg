@@ -212,12 +212,7 @@ export default function OrphionChat({
   }
 
   const handleTypingComplete = (messageId: string) => {
-    console.log("Typing complete for message:", messageId)
-    setCompletedMessageIds((prev) => {
-      const newSet = new Set(prev)
-      newSet.add(messageId)
-      return newSet
-    })
+    setCompletedMessageIds((prev) => new Set(prev).add(messageId))
     scrollToBottom() // Scroll to bottom when typing completes
   }
 
@@ -457,6 +452,15 @@ export default function OrphionChat({
         console.log("AI determined web search is needed with query:", aiResponse.searchQuery)
         setIsWebSearch(true)
 
+        // Determine if we should use Deep Search mode
+        const shouldUseDeepSearch = aiResponse.useDeepSearch || currentMode === "Deep Search"
+
+        // If Deep Search is recommended but not currently selected, switch to Deep Search mode
+        if (aiResponse.useDeepSearch && currentMode !== "Deep Search") {
+          console.log("Automatically switching to Deep Search mode for this query")
+          setCurrentMode("Deep Search")
+        }
+
         try {
           // Define the search progress callback
           const handleSearchProgress = (query: string, completed: boolean) => {
@@ -479,7 +483,12 @@ export default function OrphionChat({
           }
 
           // Perform web search with the refined query from AI and current mode
-          const searchResults = await performWebSearch(aiResponse.searchQuery, currentMode, handleSearchProgress)
+          // Use Deep Search mode if recommended
+          const searchResults = await performWebSearch(
+            aiResponse.searchQuery,
+            shouldUseDeepSearch ? "Deep Search" : currentMode,
+            handleSearchProgress,
+          )
 
           // Set summarizing state - use "analyzing" for Deep Search mode
           setIsSummarizing(true)
@@ -1158,11 +1167,13 @@ export default function OrphionChat({
                     {/* AI message content at the bottom with typing animation */}
                     <div className="text-neutral-200 text-sm leading-relaxed">
                       {message.isTyping && !completedMessageIds.has(message.id) ? (
-                        <TypingAnimation
-                          text={message.content}
-                          typingSpeed={10}
-                          onComplete={() => handleTypingComplete(message.id)}
-                        />
+                        <div className="text-streaming">
+                          <TypingAnimation
+                            text={message.content}
+                            typingSpeed={1}
+                            onComplete={() => handleTypingComplete(message.id)}
+                          />
+                        </div>
                       ) : (
                         <FormattedText text={message.content || ""} useMonaco={useMonacoEditor} />
                       )}
