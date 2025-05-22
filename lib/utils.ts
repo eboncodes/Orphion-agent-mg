@@ -1,14 +1,15 @@
-import { clsx, type ClassValue } from "clsx"
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-
-/**
- * Returns a promise that resolves after the specified time
- * @param ms Time to delay in milliseconds
- */
-export const delay = (ms: number): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+/**
+ * Creates a delay for the specified number of milliseconds
+ * @param ms The number of milliseconds to delay
+ * @returns A promise that resolves after the specified delay
+ */
+export function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
