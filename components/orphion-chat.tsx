@@ -8,7 +8,6 @@ import {
   X,
   Sparkles,
   Archive,
-  Menu,
   ChevronLeft,
   ChevronRight,
   Pyramid,
@@ -57,7 +56,7 @@ interface OrphionChatProps {
   onChatCreated?: (chat: ChatSession) => void
   onChatUpdated?: (chat: ChatSession) => void
   selectedMode?: string
-  onSidebarToggle?: () => void
+  onSidebarToggle?: () => void | null
   showSearchSources?: boolean
   showSearchImages?: boolean
   initialAttachedImage?: string | null
@@ -263,11 +262,6 @@ export default function OrphionChat({
       setCanvasContent(message.content)
       setCanvasMessageId(messageId)
       setIsCanvasOpen(true)
-
-      // Close sidebar if it's open (via the parent component)
-      if (onSidebarToggle) {
-        onSidebarToggle()
-      }
     }
   }
 
@@ -669,6 +663,12 @@ export default function OrphionChat({
     setMessages(updatedMessages)
 
     setInputValue("")
+
+    // Reset textarea height after sending
+    if (inputRef.current) {
+      inputRef.current.style.height = "40px"
+    }
+
     setIsTyping(true)
 
     // Reset textarea height
@@ -844,12 +844,14 @@ export default function OrphionChat({
   // Add an effect for auto-resizing the textarea
   useEffect(() => {
     if (inputRef.current) {
+      // Reset to default height first
+      inputRef.current.style.height = "40px"
+
       if (inputValue === "") {
-        // If input is empty, reset to minimum height
+        // If input is empty, keep at minimum height
         inputRef.current.style.height = "40px"
       } else {
-        // Otherwise, adjust height based on content
-        inputRef.current.style.height = "40px"
+        // Otherwise, adjust height based on content, but cap it
         const scrollHeight = Math.min(inputRef.current.scrollHeight, 72)
         inputRef.current.style.height = `${scrollHeight}px`
       }
@@ -968,24 +970,12 @@ export default function OrphionChat({
 
       {/* Chat Header - Updated with centered title and archive format, with user profile */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-800">
-        {isMobile ? (
-          <div className="w-20 flex items-center">
-            <button
-              className="text-neutral-400 hover:text-white transition-colors p-1"
-              onClick={onSidebarToggle}
-              aria-label="Toggle sidebar"
-            >
-              <Menu size={20} />
-            </button>
-          </div>
-        ) : (
-          <div className="w-20 flex items-center">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src="/placeholder-user.jpg" />
-              <AvatarFallback className="bg-neutral-800 text-white text-xs">EB</AvatarFallback>
-            </Avatar>
-          </div>
-        )}
+        <div className="w-20 flex items-center">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src="/placeholder-user.jpg" />
+            <AvatarFallback className="bg-neutral-800 text-white text-xs">EB</AvatarFallback>
+          </Avatar>
+        </div>
         <div className="flex items-center justify-center">
           <Archive size={16} className="text-neutral-400 mr-1" />
           <span className="text-white text-sm font-medium">
@@ -1265,13 +1255,7 @@ export default function OrphionChat({
           <Textarea
             ref={inputRef}
             className={`w-full bg-transparent border-none text-base placeholder:text-neutral-500 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-6 resize-none textarea-3-lines modern-scrollbar ${isTyping ? "opacity-50" : ""}`}
-            placeholder={
-              isTyping
-                ? "Waiting for response..."
-                : attachedImage
-                  ? "Describe the image or ask a question about it..."
-                  : "Ask follow-up"
-            }
+            placeholder="Ask follow-up"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}

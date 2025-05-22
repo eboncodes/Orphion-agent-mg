@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { ArrowUp, ChevronDown, Globe, Paperclip, Sparkles, Menu, Pyramid, X } from "lucide-react"
+import { ArrowUp, ChevronDown, Globe, Paperclip, Sparkles, Pyramid, X } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import Image from "next/image"
 import OrphionChat from "./orphion-chat"
@@ -158,12 +158,14 @@ export default function MessageBox({
   // Update the useEffect for auto-resizing the textarea
   useEffect(() => {
     if (inputRef.current) {
+      // Reset to default height first
+      inputRef.current.style.height = "40px"
+
       if (inputValue === "") {
-        // If input is empty, reset to minimum height
+        // If input is empty, keep at minimum height
         inputRef.current.style.height = "40px"
       } else {
-        // Otherwise, adjust height based on content
-        inputRef.current.style.height = "40px"
+        // Otherwise, adjust height based on content, but cap it
         const scrollHeight = Math.min(inputRef.current.scrollHeight, 72)
         inputRef.current.style.height = `${scrollHeight}px`
       }
@@ -230,14 +232,14 @@ export default function MessageBox({
     setIsPendingCreation(true)
     setInputValue("")
 
+    // Reset textarea height after sending
+    if (inputRef.current) {
+      inputRef.current.style.height = "40px"
+    }
+
     // Make sure we explicitly mark that this message has an attached image
     if (attachedImage) {
       console.log("Setting initial message with attached image")
-    }
-
-    // Reset textarea height
-    if (inputRef.current) {
-      inputRef.current.style.height = "40px"
     }
 
     // Add a small delay for the transition animation
@@ -331,16 +333,6 @@ export default function MessageBox({
           isTransitioning ? "opacity-0" : chatStarted ? "hidden" : "opacity-100"
         }`}
       >
-        {/* Mobile menu button - only visible on mobile */}
-        {isMobile && !chatStarted && (
-          <button
-            className="absolute top-3 left-3 p-2 rounded-md bg-neutral-800/50 text-white"
-            onClick={onSidebarToggle}
-          >
-            <Menu size={20} />
-          </button>
-        )}
-
         {/* Logo */}
         <div className="mb-4 animate-fadeIn">
           <Image src="/images/orphion-logo.png" alt="Orphion Logo" width={60} height={60} className="h-16 w-auto" />
@@ -363,13 +355,7 @@ export default function MessageBox({
                 className={`w-full bg-transparent border-none text-base placeholder:text-neutral-500 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none textarea-3-lines modern-scrollbar font-serif ${
                   chatStarted || isTransitioning || isStartingChat ? "opacity-50" : ""
                 }`}
-                placeholder={
-                  isStartingChat
-                    ? "Starting chat..."
-                    : attachedImage
-                      ? "Describe the image or ask a question about it..."
-                      : "Ask Anything..."
-                }
+                placeholder="Ask Anything..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -514,7 +500,7 @@ export default function MessageBox({
             isPendingCreation={isPendingCreation}
             onChatCreated={handleChatCreated}
             selectedMode={selectedMode}
-            onSidebarToggle={onSidebarToggle}
+            onSidebarToggle={null} // Removed sidebar toggle
             onChatUpdated={onChatUpdated}
             showSearchSources={localShowSearchSources}
             showSearchImages={localShowSearchImages}
