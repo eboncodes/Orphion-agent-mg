@@ -2,7 +2,7 @@
 
 **Orphion-agent** is a free and open-source AI assistant platform developed by [TEJ intelligence](https://tejintelligence.com). Built for speed and intelligence, Orphion-agent combines cutting-edge language models with modern UI/UX to deliver fast, context-aware AI interactions. This project is currently web-based, with mobile versions in development.
 # Orphion Agent Preview
-[![image.png](https://i.postimg.cc/BnwrpJd0/image.png)](https://postimg.cc/4YV2NRfL) <!-- Replace or remove if you don’t have a screenshot -->
+[![image.png](https://i.postimg.cc/3R32NSqh/image.png)](https://postimg.cc/jWkDkXK3) <!-- Replace or remove if you don’t have a screenshot -->
 
 ---
 
@@ -30,7 +30,7 @@ cd orphion-agent
 ### Install dependencies
 
 \`\`\`bash
-npm install --legacy-peer-deps
+npm install
 \`\`\`
 
 ### Build the app
